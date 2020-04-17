@@ -1,5 +1,5 @@
 # Health Management System v1.0 by JAY AKBARI
-# Suggestions & More on developerjay.joker@gmail.com
+# Suggestions & More on GITHUB = https://github.com/developerjay-jokerfriend
 
 # DOCUMENTATION v1.0
  # Supports Register & Login as a client.
