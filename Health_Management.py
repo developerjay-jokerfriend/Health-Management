@@ -30,11 +30,12 @@ def Menu():
         if menu_choice=="*": exit()
         if int(menu_choice)==1: Register()
         elif int(menu_choice)==2: Log_Activity()
-        else: Retrieve_Activity()
+        elif int(menu_choice)==3: Retrieve_Activity()
+        else: print("Please enter correct input!\n")
 
 def Register():
     # User Registration
-    print("======== PRESS # anytime to go back to MENU =======")
+    print("\n======== PRESS # anytime to go back to MENU =======")
     print("================= Please Register =================")
     name=input("Enter New Username: ")
     if (name == "#"): Menu()
@@ -44,7 +45,7 @@ def Register():
     clients.insert(1,pwd)
     Update_Clients_File() #Update new client in file
     Retrieve_Clients_File() #Update buffer with latest clients
-    print("********** Welcome,",name.upper(),"! **********")
+    print("\n********** Welcome,",name.upper(),"! **********\n")
 
 def Update_Clients_File():
     # Registered User is add in clients file and total users 'entry' is updated.
@@ -116,7 +117,7 @@ def Fetch_Entry():
 
 def Log_Activity():
     # User Authentication and asks for Food Log or Exercise Log
-    print("==== PRESS # anytime to go back to MENU ====")
+    print("\n==== PRESS # anytime to go back to MENU ====")
     print("========== WHAT YOU WANT TO LOG? ===========\n",
           "Press 1 - Food\n","Press 2 - Exercise")
     num=input("Enter: ")
@@ -136,7 +137,7 @@ def Food_Logging():
     filename = gname+"_FOOD.txt"
     f=open(filename,"a")
     str_temp = Get_Date()
-    print("============ PRESS # anytime to go back to MENU ============")
+    print("\n============ PRESS # anytime to go back to MENU ============")
     print("================",str_temp,"================")
     uinput=input("Enter Your Food Activity: ")
     if(uinput=="#"): Menu()
@@ -146,7 +147,7 @@ def Food_Logging():
     f.write(uinput)
     f.write("\n")
     f.close()
-    print("============== SUCCESSFULLY SAVED ! ==============")
+    print("============== SUCCESSFULLY SAVED ! ==============\n")
 
 def Exercise_Logging():
     while(True):
@@ -155,7 +156,7 @@ def Exercise_Logging():
     f = open(filename, "a")
 
     str_temp = Get_Date()
-    print("=================== PRESS # anytime to go back to MENU ==================")
+    print("\n=================== PRESS # anytime to go back to MENU ==================")
     print("=======================", str_temp, "=======================")
     uinput = input("Enter Your Exercise Activity: ")
     if(uinput=="#"): Menu()
@@ -166,11 +167,11 @@ def Exercise_Logging():
     f.write(uinput)
     f.write("\n")
     f.close()
-    print("============== SUCCESSFULLY SAVED ! ==============")
+    print("============== SUCCESSFULLY SAVED ! ==============\n")
 
 def Retrieve_Activity():
     # User Authentication and asks for Food or Exercise Retrieval
-    print("==== PRESS # anytime to go back to MENU ====")
+    print("\n==== PRESS # anytime to go back to MENU ====")
     print("=== WHAT YOU WANT TO RETRIEVE ? ===\n", "Press 1 - Food\n", "Press 2 - Exercise")
     num = input("Enter: ")
     if num=="#": Menu()
@@ -198,11 +199,11 @@ def Food_Ret():
             Menu()
         if i=="#": Menu()
 
-    print("**********",gname,"'s FOOD LOG **********")
+    print("\n**********",gname,"'s FOOD LOG **********")
     f.seek(0)
     print(f.read())
     f.close()
-    print("========= FINISHED FOOD RETRIEVAL! ========")
+    print("========= FINISHED FOOD RETRIEVAL! ========\n")
 
 def Exercise_Ret():
     global gname
@@ -216,7 +217,7 @@ def Exercise_Ret():
 
     if (f.read() == ""):  # When file does not exist and hence empty
 
-        print(" EXERCISE LOG DOES NOT EXIST.\n",
+        print("\nEXERCISE LOG DOES NOT EXIST.\n",
               "Press 0 to start Log Activity\n",
               "Press # to go back to MENU")
         i = input("Enter: ")
@@ -225,11 +226,11 @@ def Exercise_Ret():
             Menu()
         if i == "#": Menu()
 
-    print("**********",gname,"'s EXERCISE LOG **********")
+    print("\n**********",gname,"'s EXERCISE LOG **********")
     f.seek(0)
     print(f.read())
     f.close()
-    print("========= FINISHED EXERCISE RETRIEVAL! ========")
+    print("========= FINISHED EXERCISE RETRIEVAL! ========\n")
 
 def Authentication():
     global gname
@@ -245,11 +246,11 @@ def Authentication():
         val=temp.pop(key) # get password corresponding to username
         if uname==key and pwd==val:
             gname=key
-            print("============================================\n",
+            print("\n============================================\n",
                   "Logged In Successfully!\n",
                   "============================================")
             return True
-    print("XXX Invalid Username or Password ! XXX")
+    print("\nXXX Invalid Username or Password ! XXX\n")
     return False
 
 
