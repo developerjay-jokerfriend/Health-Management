@@ -34,8 +34,8 @@ def Menu():
 
 def Register():
     # User Registration
-    print("==== PRESS # anytime to go back to MENU ====")
-    print("=====Please Register=====")
+    print("======== PRESS # anytime to go back to MENU =======")
+    print("================= Please Register =================")
     name=input("Enter New Username: ")
     if (name == "#"): Menu()
     pwd=input("Enter New Password: ")
@@ -44,7 +44,7 @@ def Register():
     clients.insert(1,pwd)
     Update_Clients_File() #Update new client in file
     Retrieve_Clients_File() #Update buffer with latest clients
-    print("Welcome,",name.upper(),"!")
+    print("********** Welcome,",name.upper(),"! **********")
 
 def Update_Clients_File():
     # Registered User is add in clients file and total users 'entry' is updated.
