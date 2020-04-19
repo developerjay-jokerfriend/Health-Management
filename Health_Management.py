@@ -14,13 +14,13 @@ entry=0
 gname=""
 def Menu():
     # Main Menu
-    print("===================================================\n",
-          "****** Health Management System v1.0 by Jay ******\n",
-          "==================================================\n",
-          "Suggestions & More on developerjay.joker@gmail.com\n",
-          "==================================================")
+    print("=====================================================\n",
+          "******* Health Management System v1.0 by Jay ********\n",
+          "=====================================================\n",
+          "Suggestions & More on GITHUB/developerjay-jokerfriend\n",
+          "======================================================")
     while(True):
-        print(" ==================== MENU ========================\n",
+        print(" ====================== MENU ==========================\n",
               "Press 1 to Register\n",
               "Press 2 to Log Activity\n",
               "Press 3 to Retrieve Activity\n",
