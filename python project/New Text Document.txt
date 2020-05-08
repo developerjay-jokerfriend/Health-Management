@@ -1,4 +1,4 @@
-
+================================================
 Inward
 Entry from user: 
 	Supplier Name:
@@ -11,8 +11,14 @@ Entry from user:
 	Document No. :
 
 ONLY LOG FILES CHANGES BECAUSE ONLY DESCRIPTIVE ENTIRIES ARE ADDED.
-* INWARD LOG FILE
-* OUTWARD LOG FILE
+THESE CHANGES.
+* INWARD LOG FILE (WRITE)
+* OUTWARD LOG FILE (WRITE)
+* READ INWARD LOG
+* READ OUTWARD LOG
+* TABLE OUTWARD LOG
+* TABLE INWARD LOG
+
 
 ===========================================
 Net Stock TABLE

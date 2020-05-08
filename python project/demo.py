@@ -5,6 +5,8 @@ file_inward_log="InwardItemLog.txt"
 file_outward_log="OutwardItemLog.txt"
 file_net_stock="NetStock.txt"
 file_inward_stock="InwardItemStock.txt"
+file_CAS_stock="CASItemStock.txt"
+file_CAS_log="CASItemLog.txt"
 
 #List Buffers
 List_ItemCode = []
@@ -16,8 +18,14 @@ List_Supplier = []
 List_Customer = []
 List_Document = []
 List_TimeStamp = []
+#=========== CAS LIST BUFFERS ====================
+List_CAS_ItemCode = []
+List_CAS_Item =  []
+List_CAS_Quantity = []
 
-
+def CreateFileIfNotExist(file):
+    f= open(file,"a")
+    f.close()
 
 def EnterInwardItem():
 # Menu to capture Inward Item details
@@ -72,6 +80,8 @@ def ReadInwardItem():
     List_ItemCode = []
     List_Item = []
     List_Quantity = []
+
+    CreateFileIfNotExist(file_inward_stock)
     f=open(file_inward_stock,"r")
     s = f.read()
     if len(s) == 0 : pass # if file is empty
@@ -91,6 +101,7 @@ def ReadInwardItem():
 def WriteInwardItem():
 # Updates the inward stock file using content of List Buffers.
     global List_ItemCode, List_Item, List_Quantity
+    CreateFileIfNotExist(file_inward_stock)
     f = open(file_inward_stock, "w")
     i=0
     s=""
@@ -101,7 +112,7 @@ def WriteInwardItem():
     f.close()
 
 def AddItem(InputList):
-# Inward Item is is added into list bufferes  / the inward stock
+# Inward Item is is added into list bufferes  / the inward stock / CAS STOCK which ever party calls...
     global List_ItemCode,List_Item,List_Quantity
     # When item is present in List Buffers/file
     if InputList[0] in List_ItemCode:
@@ -151,7 +162,7 @@ def EnterOutwardItem():
                 print("\n\n\n    ERROR ! PLEASE ENTER QUANTITY IN INTEGERS.\n\n\n")
 
         i = i.upper()  # MAKE CODE UPPERCASE
-        print(f"\n    OUTWARD ITEM DETIALS : \n"
+        print(f"\n    OUTWARD ITEM DETAILS : \n"
               f"    ITEM CODE : {i}\n"
               f"    ITEM NAME : {n}\n"
               f"    QUANTITY : {q}\n"
@@ -179,6 +190,8 @@ def ReadNetStock():
     List_ItemCode = []
     List_Item = []
     List_Quantity = []
+
+    CreateFileIfNotExist(file_net_stock)
     f = open(file_net_stock, "r")
     s = f.read()
     if len(s) == 0:
@@ -200,6 +213,7 @@ def ReadNetStock():
 def WriteNetStock():
 # Updates the Net Stock file from the list buffers.
     global List_ItemCode, List_Item, List_Quantity
+    CreateFileIfNotExist(file_net_stock)
     f = open(file_net_stock, "w")
     i = 0
     s = ""
@@ -258,6 +272,8 @@ def ReadInwardLog():
     List_TimeStamp = []
     List_Supplier = []
     List_Document = []
+
+    CreateFileIfNotExist(file_inward_log)
     f = open(file_inward_log, "r")
     s = f.read()
     if len(s) == 0:
@@ -293,7 +309,7 @@ def ReadOutwardLog():
     List_Customer = []
     List_Document = []
 
-
+    CreateFileIfNotExist(file_outward_log)
     f = open(file_outward_log, "r")
     s = f.read()
     if len(s) == 0:
@@ -374,7 +390,7 @@ def TableInwardLog():
     print("\n\n", tabulate(mydata, headers=headers), "\n\n")
 
 def TableNetStock():
-    global List_TimeStamp, List_ItemCode, List_Item, List_Quantity
+    global List_ItemCode, List_Item, List_Quantity
     i = 0
     mydata = []
     n = 1  # For Serial No.
@@ -390,12 +406,12 @@ def TableNetStock():
         temp_tuple = tuple(temp_list)
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
-    headers = ["SR NO.","ITEM-CODE", "ITEM-NAME", "QTY."]
+    headers = ["SR NO.","I-CODE", "I-NAME", "QTY."]
     print("\n\n\n    *** NET-STOCK TABLE ***")
     print("\n\n", tabulate(mydata, headers=headers), "\n\n")
 
 def TableInwardStock():
-    global List_TimeStamp, List_ItemCode, List_Item, List_Quantity
+    global  List_ItemCode, List_Item, List_Quantity
     i = 0
     mydata = []
     n = 1  # For Serial No.
@@ -411,9 +427,82 @@ def TableInwardStock():
         temp_tuple = tuple(temp_list)
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
-    headers = ["SR NO.", "ITEM-CODE", "ITEM-NAME", "QTY."]
+    headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
     print("\n\n\n    *** INWARD-STOCK TABLE ***")
     print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+def TableCASStock():
+    global List_ItemCode, List_Item, List_Quantity
+    i = 0
+    mydata = []
+    n = 1  # For Serial No.
+    for i in range(len(List_ItemCode)):
+        temp_list = []
+        # CHANGE THE ORDER OF STATEMENTS TO CHANGE THE ORDER OF COLUMNS IN OUTPUT.
+        temp_list.append(n)  # For Serial No.
+        temp_list.append(List_ItemCode[i])
+        temp_list.append(List_Item[i])
+        temp_list.append(List_Quantity[i])
+        # =======================================================================
+        n = n + 1  # INCREMENT SERIAL NO.
+        temp_tuple = tuple(temp_list)
+        mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
+
+    headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
+    print("\n\n\n    *** (CAS) COMPLETE ASSEMBLED SHAFTS - STOCK TABLE ***")
+    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+def ReadCASLog():
+    global List_ItemCode, List_Item, List_Quantity, List_TimeStamp
+    # Clear the list buffers.
+    List_ItemCode = []
+    List_Item = []
+    List_Quantity = []
+    List_TimeStamp = []
+
+    CreateFileIfNotExist(file_CAS_log)
+    f = open(file_inward_log, "r")
+    s = f.read()
+    if len(s) == 0:
+        pass  # if file is empty
+    else:  # If file is not Empty
+        temp_list1 = s.split("\n")  # got all rows in the list.
+        for item in temp_list1:  # for each row in list
+            temp_str = str(item)
+            temp_list2 = temp_str.split(" ---#--- ")  # got attributes of a row as list
+
+            if temp_list2[0] == "":
+                pass  # By pass "" empty item of the list due to \n
+            else:
+                List_TimeStamp.append(temp_list2[0])
+                List_ItemCode.append(temp_list2[1])
+                List_Item.append(temp_list2[2])
+                List_Quantity.append(temp_list2[3])
+    f.close()
+
+
+def TableCASLog():
+    global List_TimeStamp, List_ItemCode, List_Item, List_Quantity
+    i = 0
+    mydata = []
+    n = 1  # For Serial No.
+    for i in range(len(List_ItemCode)):
+        temp_list = []
+        # CHANGE THE ORDER OF STATEMENTS TO CHANGE THE ORDER OF COLUMNS IN OUTPUT.
+        temp_list.append(n)  # For Serial No.
+        temp_list.append(List_TimeStamp[i])
+        temp_list.append(List_ItemCode[i])
+        temp_list.append(List_Item[i])
+        temp_list.append(List_Quantity[i])
+        # =======================================================================
+        n = n + 1  # INCREMENT SERIAL NO.
+        temp_tuple = tuple(temp_list)
+        mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
+
+    headers = ["SR NO.", "CAS-ENTRY-TIME", "I-CODE", "I-NAME", "QTY."]
+    print("\n\n\n    *** (CAS) COMPLETE ASSEMBLED SHAFTS - LOG TABLE ***")
+    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
 
 def View(file):
 
@@ -434,14 +523,210 @@ def View(file):
         ReadInwardItem()
         TableInwardStock()
 
+    elif file==file_CAS_stock:
+        ReadCAS()
+        TableCASStock()
+
+    elif file==file_CAS_log:
+        ReadCASLog()
+        TableCASLog()
+
     else:
         print("    ERROR MATCHING FILE NAME")
         pass
     #========================================================================
+#========================================== CAS =========================================================
+
+def EnterCAS():
+    # Menu to capture CAS Item details
+    while (True):
+        while (True):
+            print("\n    ENTER COMPLETE ASSEMBLED SHAFTS (CAS) DETAIL : ")
+            i = input("    Enter CAS Product Code = ")  # PK
+            n = input("    Enter CAS Product Name = ")
+            q = input("    Enter Quantity = ")
+            try:
+                temp = int(q)
+                break
+            except:
+                print("\n\n\n    ERROR ! PLEASE ENTER QUANTITY IN INTEGERS.\n\n\n")
+
+        i = i.upper()  # MAKE CODE UPPERCASE
+        print(f"\n    COMPLETE ASSEMBLED SHAFTS (CAS) DETAIL: \n"
+              f"    CAS PRODUCT CODE : {i}\n"
+              f"    CAS PRODUCT NAME : {n}\n"
+              f"    QUANTITY : {q}\n"
+              )
+        confirm = input("    Press 1 to confirm CAS entry: ")
+        if confirm == "1": break
+
+    return [i, n, q]  # dont change the list item index order here.
+
+def Read_CAS_SubASSEMBLIES(ListOfCASInputs):
+    global List_CAS_Item, List_CAS_ItemCode, List_CAS_Quantity
+    # CLear the CAS LIST Buffers
+    List_CAS_ItemCode = []
+    List_CAS_Item = []
+    List_CAS_Quantity = []
+
+    # Open the Item-Code File to load the subassemblies in CAS List Buffers
+    CreateFileIfNotExist(f"{ListOfCASInputs[0]}.txt")
+    f = open(f"{ListOfCASInputs[0]}.txt", "r")
+
+    s = f.read()
+    if len(s) == 0:
+        pass  # if file is empty
+    else:  # If file is not Empty
+        temp_list1 = s.split("\n")  # got all rows in the list.
+        for item in temp_list1:  # for each row in list
+            temp_str = str(item)
+            temp_list2 = temp_str.split(" ---#--- ")  # got attributes of a row as list
+
+            if temp_list2[0] == "":
+                pass  # By pass "" empty item of the list due to \n
+            else:
+                List_CAS_ItemCode.append(temp_list2[0])
+                List_CAS_Item.append(temp_list2[1])
+                List_CAS_Quantity.append(temp_list2[2])
+    f.close()
+
+
+def TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs):
+
+    i = 0
+    mydata = []
+    n = 1  # For Serial No.
+    for i in range(len(temp_icode)):
+        temp_list = []
+        # CHANGE THE ORDER OF STATEMENTS TO CHANGE THE ORDER OF COLUMNS IN OUTPUT.
+        temp_list.append(n)  # For Serial No.
+        temp_list.append(temp_icode[i])
+        temp_list.append(temp_iname[i])
+        temp_list.append(temp_iquantity[i])
+        # =======================================================================
+        n = n + 1  # INCREMENT SERIAL NO.
+        temp_tuple = tuple(temp_list)
+        mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
+
+    headers = ["SR NO.","I-CODE", "I-NAME", "QTY."]
+    print(f"\n\n\n    *** >>> {ListOfCASInputs[1]} - {ListOfCASInputs[0]} <<< MISSING SUB ASSEMBLIES TABLE ***")
+    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
 
 
 
 
+def CAS_Subtract(ListOfCASInputs):
+    global List_ItemCode, List_Item, List_Quantity, List_CAS_Item, List_CAS_ItemCode, List_CAS_Quantity
+    temp_icode = []
+    temp_iname = []
+    temp_iquantity = []
+    Read_CAS_SubASSEMBLIES(ListOfCASInputs) # CAS LIST BUFFERS ARE FILLED WITH SUBASSEMBLY DATA
+    ReadNetStock()
+
+    # MATCH for each item in CAS BUFFERS is == NET STOCK BUFFERS.
+    # >>> MEANS ALL SUBASSEMBLIES ARE PRESENT IN STOCK.
+    #        IF SO THEN SUBTRACT QUANTITY OF ALL SUB ASSEMBLIES FROM  RESPECTIVE NET STOCK ITEMS
+    #           THEN WRITE THE UPDATED NET STOCK
+    # IF SOME SUBASSEMBLY ITEM ABSENT
+    #       THEN DONT WRITE NET STOCK
+    #       PRINT INSUFFIENT ITEMS AND WHICH ARE INSUFFCIENT ITEMS.
+
+    MISSING = 0
+    for c_item in List_CAS_ItemCode:
+        flg = 0  # Item no present
+        for n_item in List_ItemCode:
+            # EACH SUB_ASSEMBLY ITEM IS SEARCHED IN NETSTOCK BY MATCHING ITEM CODE WITH EACH ITEM IN NETSTOCK.
+            if c_item == n_item:
+                # SUBTRACT THAT ITEM QUANTITY FROM NETSTOCK
+                i1 = List_CAS_ItemCode.index(c_item)
+                i2 = List_ItemCode.index(n_item)
+                List_Quantity[i2] = int(List_Quantity[i2]) - int(List_CAS_Quantity[i1])
+                flg=1
+                break
+
+        #INNER FOR LOOP ENDS HERE
+        if flg == 0:
+            # SPECIFIC C_ITEM NOT PRESENT IN NETSTOCK
+            i=List_CAS_ItemCode.index(c_item) # Get index of missing item
+            # FIll THE TEMP BUFFERS WITH MISSING ITEM DETAILS:
+            temp_icode.append(List_CAS_ItemCode[i])
+            temp_iname.append(List_CAS_Item[i])
+            temp_iquantity.append(List_CAS_Quantity[i])
+            MISSING = 1
+
+    # OUTER FOR LOOP ENDS HERE
+    if MISSING == 1:
+        print(f"\n\n\n==========================================================================\n"
+              f"INSUFFICIENT SUB-ASSEMBLIES IN NET-STOCK WHILE ENTERING"
+              f" {ListOfCASInputs[1]} - {ListOfCASInputs[0]} IN CAS!\n"
+              f"==========================================================================\n")
+        TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs)
+        return False
+    # IF CONTROL REACHES HERE
+    # MEANS ALL SUB ASSEMBLIES ARE PRESENT AND NET STOCK QUANTITY MUST BE WRITTEN WITH UPDATED LIST BUFFERS.
+    WriteNetStock()
+    return True
+
+
+def ReadCAS():
+    # Load the list buffers with the fresh data from the CAS Item Stock File.
+    global List_ItemCode, List_Item, List_Quantity
+    # Clear the list buffers.
+    List_ItemCode = []
+    List_Item = []
+    List_Quantity = []
+
+    CreateFileIfNotExist(file_CAS_stock)
+    f = open(file_CAS_stock, "r")
+    s = f.read()
+    if len(s) == 0:
+        pass  # if file is empty
+    else:  # If file is not Empty
+        temp_list1 = s.split("\n")  # got all rows in the list.
+        for item in temp_list1:  # for each row in list
+            temp_str = str(item)
+            temp_list2 = temp_str.split(" ---#--- ")  # got attributes of a row as list
+
+            if temp_list2[0] == "":
+                pass  # By pass "" empty item of the list due to \n
+            else:
+                List_ItemCode.append(temp_list2[0])
+                List_Item.append(temp_list2[1])
+                List_Quantity.append(temp_list2[2])
+    f.close()
+
+
+
+def WriteCAS():
+    # Updates the CAS Stock ITEM file from the list buffers.
+    global List_ItemCode, List_Item, List_Quantity
+    CreateFileIfNotExist(file_CAS_stock)
+    f = open(file_CAS_stock, "w")
+    i = 0
+    s = ""
+    for n in range(len(List_ItemCode)):
+        s = s + f"\n{List_ItemCode[i]} ---#--- {List_Item[i]} ---#--- {List_Quantity[i]}"
+        i = i + 1
+    f.write(s)
+    f.close()
+
+def LogCASItem(ListOfInputs):
+    temp_date = Get_Date()
+    f = open(file_CAS_log, "a")
+    string = f"\n[{temp_date}] ---#--- {ListOfInputs[0]} ---#--- {ListOfInputs[1]} ---#--- {ListOfInputs[2]}"
+    f.write(string)
+    f.close()
+
+
+def CAS():
+    temp1 = EnterCAS()
+
+    if (CAS_Subtract(temp1)): # IF ALL SUBASSEMBLIES ARE SUBTRACTED FROM NETSTOCK - (FEASIBLE)
+        LogCASItem(temp1)
+
+        ReadCAS() # FILL BUFFERS OF CAS STOCK FILE
+        AddItem(temp1)  # if condition is true : INCREMENT CAS STOCK with the user CAS Input.
+        WriteCAS() # WRITE THE UPDATED BUFFERS BACK TO CAS STOCK FILE.
 
 
 #========================================================================================================
@@ -450,15 +735,18 @@ def Menu():
 
     while(True):
         print("\n\n*** DND PLOUGH - AGRICULTURAL SHAFTS AND ACCESSORIES ***\n\n"
-              "================== MENU ================\n"
-              "    ENTER 1 - INWARD AN ITEM\n"
-              "    ENTER 2 - OUTWARD AN ITEM\n\n"
-              "    ENTER 3 - VIEW INWARD LOG\n"
-              "    ENTER 4 - VIEW OUTWARD LOG\n\n"
-              "    ENTER 5 - VIEW INWARD STOCK\n"
-              "    ENTER 6 - VIEW NET STOCK\n"
-              "    ENTER # - TO EXIT APPLICATION\n\n"
-              "========================================\n")
+              "======================== MENU ======================\n"
+              "    ENTER 1 - ENTER INWARD AN ITEM\n"
+              "    ENTER 2 - ENTER OUTWARD AN ITEM\n"
+              "    ENTER 3 - ENTER COMPLETE ASSEMBLED SHAFTS (CAS)\n\n"
+              "    ENTER 4 - VIEW INWARD LOG\n"
+              "    ENTER 5 - VIEW OUTWARD LOG\n"
+              "    ENTER 6 - VIEW CAS LOG\n\n"
+              "    ENTER 7 - VIEW INWARD STOCK\n"
+              "    ENTER 8 - VIEW NET STOCK\n"
+              "    Enter 9 - VIEW CAS STOCK\n\n"
+              "    ENTER # - TO EXIT APPLICATION\n"
+              "====================================================\n")
         x=input("    Enter: ")
         if x=="1":
             InwardItem()
@@ -467,16 +755,25 @@ def Menu():
             OutwardItem()
 
         elif x=="3":
-            View(file_inward_log)
+            CAS()
 
         elif x=="4":
-            View(file_outward_log)
+            View(file_inward_log)
 
         elif x=="5":
-            View(file_inward_stock)
+            View(file_outward_log)
 
         elif x=="6":
+            View(file_CAS_log)
+
+        elif x=="7":
+            View(file_inward_stock)
+
+        elif x=="8":
             View(file_net_stock)
+
+        elif x=="9":
+            View(file_CAS_stock)
 
         elif x=="#":
             break
