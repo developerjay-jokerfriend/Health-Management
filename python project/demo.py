@@ -9,11 +9,15 @@ file_CAS_stock="CASItemStock.txt"
 file_CAS_log="CASItemLog.txt"
 file_CAS_Entry = "CASEntry.txt"
 file_Grouped_Inward_Entry = "GroupedInwardEntry.txt"
-
+file_MIN_Entry = "MIN_Entry.txt"
 # Entry Lists
 List_CAS_Entry = []
 List_Grouped_Inward_Entry = []
-
+List_MIN_iCode_Entry = []
+List_MIN_iValue_Entry = []
+# MIN ALERT WIDGET
+List_NetStock_Min = []
+List_NetStock_Alert = []
 #List Buffers
 List_ItemCode = []
 List_Item = []
@@ -537,7 +541,7 @@ def TableInwardLog():
     print("\n\n", tabulate(mydata, headers=headers), "\n\n")
 
 def TableNetStock():
-    global List_ItemCode, List_Item, List_Quantity
+    global List_ItemCode, List_Item, List_Quantity, List_NetStock_Min, List_NetStock_Alert
     i = 0
     mydata = []
     n = 1  # For Serial No.
@@ -548,12 +552,14 @@ def TableNetStock():
         temp_list.append(List_ItemCode[i])
         temp_list.append(List_Item[i])
         temp_list.append(List_Quantity[i])
+        temp_list.append(List_NetStock_Min[i])
+        temp_list.append(List_NetStock_Alert[i])
         # =======================================================================
         n = n + 1  # INCREMENT SERIAL NO.
         temp_tuple = tuple(temp_list)
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
-    headers = ["SR NO.","I-CODE", "I-NAME", "QTY."]
+    headers = ["SR NO.","I-CODE", "I-NAME", "QTY.", "MIN", "ALERT"]
     print("\n\n\n    *** NET-STOCK TABLE ***")
     print("\n\n", tabulate(mydata, headers=headers), "\n\n")
 
@@ -608,7 +614,7 @@ def ReadCASLog():
     List_TimeStamp = []
 
     CreateFileIfNotExist(file_CAS_log)
-    f = open(file_inward_log, "r")
+    f = open(file_CAS_log, "r")
     s = f.read()
     if len(s) == 0:
         pass  # if file is empty
@@ -651,6 +657,69 @@ def TableCASLog():
     print("\n\n", tabulate(mydata, headers=headers), "\n\n")
 
 
+def Read_MIN_Entry():
+    global List_MIN_iCode_Entry, List_MIN_iValue_Entry
+    # Clear the buffers
+    List_MIN_iCode_Entry = []
+    List_MIN_iValue_Entry = []
+
+    CreateFileIfNotExist(file_MIN_Entry)
+    f = open(file_MIN_Entry, "r")
+    s= f.read()
+    if len(s) == 0:
+        pass  # if file is empty
+    else:  # If file is not Empty
+        temp_list1 = s.split("\n")  # got all rows in the list.
+        for item in temp_list1:  # for each row in list
+            temp_str = str(item)
+            temp_list2 = temp_str.split(" ---#--- ")  # got attributes of a row as list
+
+            if temp_list2[0] == "":
+                pass  # By pass "" empty item of the list due to \n
+            else:
+                List_MIN_iCode_Entry.append(temp_list2[0])
+                List_MIN_iValue_Entry.append(temp_list2[2])
+
+    f.close()
+
+def Widget_MINALERT():
+    global List_MIN_iCode_Entry, List_MIN_iValue_Entry, List_NetStock_Min, List_NetStock_Alert, List_ItemCode, List_Item, List_Quantity
+    Read_MIN_Entry()
+    # Clear the bufffers
+    List_NetStock_Min = []
+    List_NetStock_Alert = []
+
+    for item1 in List_ItemCode:
+        match = 0 # ITEM1!= ITEM2 >>> match is 0.
+        for item2 in List_MIN_iCode_Entry:
+            if( item1 == item2 ):
+                # Find index of item1 and item2
+                i1 = List_ItemCode.index(item1)
+                i2 = List_MIN_iCode_Entry.index(item2)
+                # APPEND Corresponding MIN VALUE matching to ITEM CODE for EACH ITEM IN NETSTOCK.
+                List_NetStock_Min.append(List_MIN_iValue_Entry[i2])
+
+                if int(List_Quantity[i1]) < int(List_MIN_iValue_Entry[i2]):
+                    # Quantity in Netstock is less than minimum defined.
+                    List_NetStock_Alert.append("PLACE ORDER")
+                else: # Quantity in Netstock is >= minimum defined...
+                    List_NetStock_Alert.append("-----------")
+                match = 1
+                break
+        # OUTSIDE INNER FOR LOOP
+        if match == 0:
+            # MIN VALUE NOT DEFINED FOR THIS PARTICULAR ITEM1. HENCE DEFAULT MIN VAL IS 1.
+            List_NetStock_Min.append("1")
+
+            # Find Index of current item1 of NetStock which does not have MIN val defined.
+            n = List_ItemCode.index(item1)
+            if int(List_Quantity[n]) < 1:
+                # Quantity in Netstock is less than default MIN (1)
+                List_NetStock_Alert.append("PLACE ORDER")
+            else:  # Quantity in Netstock is >= minimum defined...
+                List_NetStock_Alert.append("-----------")
+
+
 def View(file):
 
     #============= Fill the required buffers and Tabulate==============================
@@ -664,6 +733,7 @@ def View(file):
 
     elif file==file_net_stock:
         ReadNetStock()
+        Widget_MINALERT()
         TableNetStock()
 
     elif file==file_inward_stock:
