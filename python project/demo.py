@@ -7,6 +7,12 @@ file_net_stock="NetStock.txt"
 file_inward_stock="InwardItemStock.txt"
 file_CAS_stock="CASItemStock.txt"
 file_CAS_log="CASItemLog.txt"
+file_CAS_Entry = "CASEntry.txt"
+file_Grouped_Inward_Entry = "GroupedInwardEntry.txt"
+
+# Entry Lists
+List_CAS_Entry = []
+List_Grouped_Inward_Entry = []
 
 #List Buffers
 List_ItemCode = []
@@ -39,6 +45,9 @@ def EnterInwardItem():
             dn = input("    Enter Document No. = ")
             d = input("    Enter Date dd/mm/yy = ")
             ds = input("    Enter Remarks = ") # Description
+            if (i != "" and n != ""): break
+            else:
+                print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
 
             try:
                 temp=int(q)
@@ -155,6 +164,9 @@ def EnterOutwardItem():
             dn = input("    Enter Document No. = ")
             d = input("    Enter Date dd/mm/yy = ")
             ds = input("    Enter Remarks = ")
+            if (i != "" and n != ""): break
+            else:
+                print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
             try:
                 temp=int(q)
                 break
@@ -226,15 +238,18 @@ def WriteNetStock():
 
 def SubtractItem(InputList):
 # Subtracts item entered by user for outward from list buffers / net stock. Returns True if outwarding is feasible.
+# Also updates the net stock if feasible.
     global List_ItemCode,List_Item,List_Quantity
+    ReadNetStock()
     # When Item is present in Net Stock
     if InputList[0] in List_ItemCode:
-        for item in List_ItemCode:
+        for item in List_ItemCode: # Item is surely present in Net Stock.
             if item == InputList[0]:
                 i = List_ItemCode.index(item)  # Find the index (row) of the item in Buffer Lists.
                 if (( int(List_Quantity[i]) - int(InputList[2]) ) >= 0 ):
                     # Update Quantity List Buffer When Item Already present
                     List_Quantity[i] = int(List_Quantity[i]) - int(InputList[2])
+                    WriteNetStock()
                     return True
                 else:
                     print("\n\n\n    ==========================================================\n"
@@ -243,22 +258,154 @@ def SubtractItem(InputList):
                     return False
     else:  # When Item is not present in stock
         print(f"\n\n\n    =================================================================================\n"
-              f"    {InputList[1]}-{InputList[0]} : ZERO ITEMS IN STOCK. PLEASE PLACE AN INWARD ORDER.\n"
+              f"    {InputList[1]}-{InputList[0]} - NEVER APPEARED IN YOUR INVENTORY.\n"
               f"    ==================================================================================\n\n\n")
-        List_ItemCode.append(InputList[0])
-        List_Item.append(InputList[1])
-        List_Quantity.append("0")  # Make an entry in Net Stock file that item quantity is zero.
         return False
+
+def Subtract_CAS_Stock(InputList):
+    global List_ItemCode, List_Item, List_Quantity
+    ReadCAS()
+    for item in List_ItemCode:  # (Item is surely present in CAS coz then only this fn is called.)
+        if item == InputList[0]:
+            i = List_ItemCode.index(item)  # Find the index (row) of the item in Buffer Lists.
+            if ((int(List_Quantity[i]) - int(InputList[2])) >= 0):
+                # Update Quantity List Buffer When Item is sufficient to outward.
+                List_Quantity[i] = int(List_Quantity[i]) - int(InputList[2])
+                WriteCAS()
+                return True
+            else:
+                print("\n\n\n    ==========================================================\n"
+                        "    INSUFFICIENT ITEMS IN CAS STOCK. PLEASE PLACE CAS ENTRY!\n"
+                        "    ==========================================================\n\n\n")
+                return False
+
+
+def Subtract_Grouped_Inward_Item(ListOfCASInputs):
+    # (Consider CAS word as Grouped Inward Item)
+    global List_ItemCode, List_Item, List_Quantity, List_CAS_Item, List_CAS_ItemCode, List_CAS_Quantity
+    temp_icode = []
+    temp_iname = []
+    temp_iquantity = []
+    Read_CAS_SubASSEMBLIES(ListOfCASInputs)  # CAS LIST BUFFERS ARE FILLED WITH SUBASSEMBLY DATA
+    ReadNetStock()
+
+    # MATCH for each item in CAS BUFFERS is == NET STOCK BUFFERS.
+    # >>> MEANS ALL SUBASSEMBLIES ARE PRESENT IN STOCK.
+    #        IF SO THEN SUBTRACT QUANTITY OF ALL SUB ASSEMBLIES FROM  RESPECTIVE NET STOCK ITEMS
+    #           THEN WRITE THE UPDATED NET STOCK
+    # IF SOME SUBASSEMBLY ITEM ABSENT
+    #       THEN DONT WRITE NET STOCK
+    #       PRINT INSUFFIENT ITEMS AND WHICH ARE INSUFFCIENT ITEMS.
+
+    MISSING = 0
+
+    for c_item in List_CAS_ItemCode:
+        flg = 0  # Item not present
+        That_NetStock_item_quantity = 0
+        for n_item in List_ItemCode:
+            # EACH SUB_ASSEMBLY ITEM IS SEARCHED IN NETSTOCK BY MATCHING ITEM CODE WITH EACH ITEM IN NETSTOCK.
+            if c_item == n_item:
+                # SUBTRACT THAT ITEM QUANTITY FROM NETSTOCK
+                i1 = List_CAS_ItemCode.index(c_item)
+                i2 = List_ItemCode.index(n_item)
+                if ((int(List_Quantity[i2]) - (int(ListOfCASInputs[2]) * int(List_CAS_Quantity[i1]))) >= 0):
+                    List_Quantity[i2] = int(List_Quantity[i2]) - (int(ListOfCASInputs[2]) * int(List_CAS_Quantity[i1]))
+                    flg = 1
+                    break
+                else:
+                    # Saved the quantity of the item in netstock which is insufficient.
+                    That_NetStock_item_quantity = int(List_Quantity[i2])
+                    break
+
+        # INNER FOR LOOP ENDS HERE
+        if flg == 0:
+            # SPECIFIC C_ITEM NOT PRESENT IN NETSTOCK
+            i = List_CAS_ItemCode.index(c_item)  # Get index of missing item
+            # FIll THE TEMP BUFFERS WITH MISSING ITEM DETAILS:
+            temp_icode.append(List_CAS_ItemCode[i])
+            temp_iname.append(List_CAS_Item[i])
+            net_missing_quantity = (int(ListOfCASInputs[2]) * int(List_CAS_Quantity[i])) - That_NetStock_item_quantity
+
+            temp_iquantity.append(net_missing_quantity)
+            MISSING = 1
+
+    # OUTER FOR LOOP ENDS HERE
+    if MISSING == 1:
+        print(f"\n\n\n==========================================================================\n"
+              f"INSUFFICIENT SUB-ASSEMBLIES IN NET-STOCK WHILE ENTERING"
+              f" {ListOfCASInputs[1]} - {ListOfCASInputs[0]} IN OUTWARD!\n"
+              f"==========================================================================\n")
+        TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs)
+        return False
+    # IF CONTROL REACHES HERE
+    # MEANS ALL SUB ASSEMBLIES ARE PRESENT AND NET STOCK QUANTITY MUST BE WRITTEN WITH UPDATED LIST BUFFERS.
+    WriteNetStock()
+    return True
+
+
+def Read_CAS_Entry():
+    global List_CAS_Entry
+    # Clear Buffer
+    List_CAS_Entry = []
+    CreateFileIfNotExist(file_CAS_Entry)
+
+    f = open(file_CAS_Entry,"r")
+    s = f.read()
+    if len(s) == 0:
+        pass  # if file is empty
+    else:  # If file is not Empty
+        temp_list1 = s.split("\n")  # got all rows in the list.
+        for item in temp_list1:  # for each row in list
+            temp_str = str(item) # Convert the row into string
+            temp_list2 = temp_str.split(" ---#--- ")  # got attributes of a row as list
+
+            if temp_list2[0] == "":
+                pass  # By pass "" empty item of the list due to \n
+            else:
+                List_CAS_Entry.append(temp_list2[0]) # Fill the buffer with CAS item code from the CAS Entry file.
+    f.close()
+
+
+
+def Read_Grouped_Inward_Entry():
+    global List_Grouped_Inward_Entry
+    # Clear Buffer
+    List_Grouped_Inward_Entry = []
+    CreateFileIfNotExist(file_Grouped_Inward_Entry)
+
+    f = open(file_Grouped_Inward_Entry, "r")
+    s = f.read()
+    if len(s) == 0:
+        pass  # if file is empty
+    else:  # If file is not Empty
+        temp_list1 = s.split("\n")  # got all rows in the list.
+        for item in temp_list1:  # for each row in list
+            temp_str = str(item)  # Convert the row into string
+            temp_list2 = temp_str.split(" ---#--- ")  # got attributes of a row as list
+
+            if temp_list2[0] == "":
+                pass  # By pass "" empty item of the list due to \n
+            else:
+                List_Grouped_Inward_Entry.append(temp_list2[0])  # Fill the buffer with Grouped-item code from the Grouped-Inward-Entry file.
+    f.close()
 
 def OutwardItem():
 # Outwards an item if possible and makes outward log and updates net stock file.
     temp1 = EnterOutwardItem()
-    #==============================
-    ReadNetStock()
-    if(SubtractItem(temp1)): LogOutwardItem(temp1) # if feasible to outward then only log
+    #============== FILL THE ENTRY LIST BUFFERS ================
+    Read_CAS_Entry()
+    Read_Grouped_Inward_Entry()
+    #===========================================================
+    if temp1[0] in List_CAS_Entry: # If input item is present in list of CAS Entry.
+        if (Subtract_CAS_Stock(temp1)): LogOutwardItem(temp1)
+
+    elif temp1[0] in List_Grouped_Inward_Entry: # If input item is present in the list of Grouped Inward Entry.
+        if (Subtract_Grouped_Inward_Item(temp1)): LogOutwardItem(temp1)
+
+    else:
+        if(SubtractItem(temp1)): LogOutwardItem(temp1) # if feasible to outward then only log
+
     #================================
-    WriteNetStock()  # Write down the Net Stock file with updates.
-    #=============================
 
 
 def ReadInwardLog():
@@ -545,6 +692,9 @@ def EnterCAS():
             i = input("    Enter CAS Product Code = ")  # PK
             n = input("    Enter CAS Product Name = ")
             q = input("    Enter Quantity = ")
+            if (i != "" and n != ""): break
+            else:
+                print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
             try:
                 temp = int(q)
                 break
@@ -632,17 +782,24 @@ def CAS_Subtract(ListOfCASInputs):
     #       PRINT INSUFFIENT ITEMS AND WHICH ARE INSUFFCIENT ITEMS.
 
     MISSING = 0
+
     for c_item in List_CAS_ItemCode:
         flg = 0  # Item no present
+        That_NetStock_item_quantity = 0
         for n_item in List_ItemCode:
             # EACH SUB_ASSEMBLY ITEM IS SEARCHED IN NETSTOCK BY MATCHING ITEM CODE WITH EACH ITEM IN NETSTOCK.
             if c_item == n_item:
                 # SUBTRACT THAT ITEM QUANTITY FROM NETSTOCK
                 i1 = List_CAS_ItemCode.index(c_item)
                 i2 = List_ItemCode.index(n_item)
-                List_Quantity[i2] = int(List_Quantity[i2]) - int(List_CAS_Quantity[i1])
-                flg=1
-                break
+                if((int(List_Quantity[i2]) - (int(ListOfCASInputs[2]) * int(List_CAS_Quantity[i1]))) >= 0):
+                    List_Quantity[i2] = int(List_Quantity[i2]) - (int(ListOfCASInputs[2]) * int(List_CAS_Quantity[i1]))
+                    flg=1
+                    break
+                else:
+                    # Saved the quantity of the item in netstock which is insufficient.
+                    That_NetStock_item_quantity = int(List_Quantity[i2])
+                    break
 
         #INNER FOR LOOP ENDS HERE
         if flg == 0:
@@ -651,7 +808,9 @@ def CAS_Subtract(ListOfCASInputs):
             # FIll THE TEMP BUFFERS WITH MISSING ITEM DETAILS:
             temp_icode.append(List_CAS_ItemCode[i])
             temp_iname.append(List_CAS_Item[i])
-            temp_iquantity.append(List_CAS_Quantity[i])
+            net_missing_quantity = (int(ListOfCASInputs[2]) * int(List_CAS_Quantity[i])) - That_NetStock_item_quantity
+
+            temp_iquantity.append(net_missing_quantity)
             MISSING = 1
 
     # OUTER FOR LOOP ENDS HERE
