@@ -2,15 +2,15 @@ from tabulate import tabulate
 # Attributes = ["Item Code", "Item", "Quantity", "SUPPLIER/CUSTOMER NAME", "DOCUMENT NO.", "Date", "Remarks"]
 PassWord = "testdndplough"
 # files
-file_inward_log="InwardItemLog.txt"
-file_outward_log="OutwardItemLog.txt"
-file_net_stock="NetStock.txt"
-file_inward_stock="InwardItemStock.txt"
-file_CAS_stock="CASItemStock.txt"
-file_CAS_log="CASItemLog.txt"
-file_CAS_Entry = "CASEntry.txt"
-file_Grouped_Inward_Entry = "GroupedInwardEntry.txt"
-file_MIN_Entry = "MIN_Entry.txt"
+file_inward_log="InwardItemLog.dnd"
+file_outward_log="OutwardItemLog.dnd"
+file_net_stock="NetStock.dnd"
+file_inward_stock="InwardItemStock.dnd"
+file_CAS_stock="CASItemStock.dnd"
+file_CAS_log="CASItemLog.dnd"
+file_CAS_Entry = "CASEntry.dnd"
+file_Grouped_Inward_Entry = "GroupedInwardEntry.dnd"
+file_MIN_Entry = "MIN_Entry.dnd"
 
 
 # Entry Lists
@@ -514,7 +514,7 @@ def ReadOutwardLog():
 
 def TableOutwardLog():
     global List_TimeStamp, List_ItemCode, List_Item, List_Quantity, List_Date, List_Remarks, List_Customer, List_Document
-    i = 0
+
     mydata = []
     n = 1  # For Serial No.
     for i in range(len(List_ItemCode)):
@@ -541,7 +541,7 @@ def TableOutwardLog():
 
 def TableInwardLog():
     global List_TimeStamp, List_ItemCode, List_Item, List_Quantity, List_Date, List_Remarks, List_Supplier, List_Document
-    i = 0
+
     mydata = []
     n = 1  # For Serial No.
     for i in range(len(List_ItemCode)):
@@ -567,7 +567,7 @@ def TableInwardLog():
 
 def TableNetStock():
     global List_ItemCode, List_Item, List_Quantity, List_NetStock_Min, List_NetStock_Alert
-    i = 0
+
     mydata = []
     n = 1  # For Serial No.
     for i in range(len(List_ItemCode)):
@@ -590,7 +590,7 @@ def TableNetStock():
 
 def TableInwardStock():
     global  List_ItemCode, List_Item, List_Quantity
-    i = 0
+
     mydata = []
     n = 1  # For Serial No.
     for i in range(len(List_ItemCode)):
@@ -611,7 +611,7 @@ def TableInwardStock():
 
 def TableCASStock():
     global List_ItemCode, List_Item, List_Quantity
-    i = 0
+
     mydata = []
     n = 1  # For Serial No.
     for i in range(len(List_ItemCode)):
@@ -661,7 +661,7 @@ def ReadCASLog():
 
 def TableCASLog():
     global List_TimeStamp, List_ItemCode, List_Item, List_Quantity
-    i = 0
+
     mydata = []
     n = 1  # For Serial No.
     for i in range(len(List_ItemCode)):
@@ -748,6 +748,95 @@ def Widget_MINALERT():
                 List_NetStock_Alert.append("-----------")
 
 
+
+def TableShowSubAssemblies(temp_input, CAT):
+    global List_CAS_Entry, List_Grouped_Inward_Entry, List_ItemCode, List_Item, List_Quantity
+    # Clear the buffers
+    List_ItemCode = []
+    List_Item = []
+    List_Quantity = []
+
+    flag = 0
+    if CAT == "CAS":
+        if temp_input in List_CAS_Entry:
+            CreateFileIfNotExist(f"{temp_input}.dnd")
+            f = open(f"{temp_input}.dnd", "r")
+            s = f.read()
+            if len(s) == 0:
+                pass  # if file is empty
+            else:  # If file is not Empty
+                temp_list1 = s.split("\n")  # got all rows in the list.
+                for item in temp_list1:  # for each row in list
+                    temp_str = str(item)
+                    temp_list2 = temp_str.split(" ---#--- ")  # got attributes of a row as list
+
+                    if temp_list2[0] == "":
+                        pass  # By pass "" empty item of the list due to \n
+                    else:
+                        List_ItemCode.append(temp_list2[0])
+                        List_Item.append(temp_list2[1])
+                        List_Quantity.append(temp_list2[2])
+            f.close()
+
+        else:
+            print(f"\n    CAS-CODE - {temp_input} DOES NOT EXIST IN REGISTERED CAS ENTRY LIST !\n")
+            flag = 1
+
+
+
+    elif CAT == "GIE":
+        if temp_input in List_Grouped_Inward_Entry:
+            CreateFileIfNotExist(f"{temp_input}.dnd")
+            f = open(f"{temp_input}.dnd", "r")
+            s = f.read()
+            if len(s) == 0:
+                pass  # if file is empty
+            else:  # If file is not Empty
+                temp_list1 = s.split("\n")  # got all rows in the list.
+                for item in temp_list1:  # for each row in list
+                    temp_str = str(item)
+                    temp_list2 = temp_str.split(" ---#--- ")  # got attributes of a row as list
+
+                    if temp_list2[0] == "":
+                        pass  # By pass "" empty item of the list due to \n
+                    else:
+                        List_ItemCode.append(temp_list2[0])
+                        List_Item.append(temp_list2[1])
+                        List_Quantity.append(temp_list2[2])
+            f.close()
+        else:
+            print(f"\n    GIE-CODE - {temp_input} DOES NOT EXIST IN REGISTERED GIE ENTRY LIST !\n")
+            flag = 1
+
+    else:
+        print("ERROR : NON OF CAT (CAS/GIE) MATCHED IN TABLE SHOW SUB-ASSEMBLEIS ")
+        flag = 1
+
+    #============================= TABULATE ==============================================
+    if flag == 0:
+        mydata = []
+        n = 1  # For Serial No.
+        for i in range(len(List_ItemCode)):
+            temp_list = []
+            # CHANGE THE ORDER OF STATEMENTS TO CHANGE THE ORDER OF COLUMNS IN OUTPUT.
+            temp_list.append(n)  # For Serial No.
+            temp_list.append(List_ItemCode[i])
+            temp_list.append(List_Item[i])
+            temp_list.append(List_Quantity[i])
+            # =======================================================================
+            n = n + 1  # INCREMENT SERIAL NO.
+            temp_tuple = tuple(temp_list)
+            mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
+
+        headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
+        print(f"\n\n\n    *** {CAT} {temp_input} SUB-ASSEMBLIES TABLE ***")
+        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+    #================================= OVER ==============================================================
+
+
+
+
 def TableCASEntry():
     global List_CAS_Entry, List_CAS_Entry_iname, List_CAS_SubAssemblies
     i = 0
@@ -768,10 +857,12 @@ def TableCASEntry():
     headers = ["SR NO.", "CAS-CODE", "CAS-NAME", "SUB-ASSEMBLIES"]
     print("\n\n\n    *** REGISTERED ENTRIES TABLE of COMPLETE ASSEMBLED SHAFTS (CAS) ***")
     print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    temp_input = input("\n\n    *** ENTER CAS-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
+    TableShowSubAssemblies(temp_input.upper(), "CAS")
 
 def TableGIE():
     global List_Grouped_Inward_Entry, List_GIE_name, List_GIE_SubAssemblies
-    i = 0
+
     mydata = []
     n = 1  # For Serial No.
     for i in range(len(List_Grouped_Inward_Entry)):
@@ -790,9 +881,12 @@ def TableGIE():
     print("\n\n\n    *** REGISTERED ENTRIES TABLE of GROUPED INWARD ENTRIES (GIE) ***")
     print("\n\n", tabulate(mydata, headers=headers), "\n\n")
 
+    temp_input = input("\n\n    *** ENTER GIE-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
+    TableShowSubAssemblies(temp_input.upper(),"GIE")
+
 def TableMIN():
     global List_MIN_iCode_Entry, List_MIN_iName_Entry, List_MIN_iValue_Entry
-    i = 0
+
     mydata = []
     n = 1  # For Serial No.
     for i in range(len(List_MIN_iCode_Entry)):
@@ -894,8 +988,8 @@ def Read_CAS_SubASSEMBLIES(ListOfCASInputs):
     List_CAS_Quantity = []
 
     # Open the Item-Code File to load the subassemblies in CAS List Buffers
-    CreateFileIfNotExist(f"{ListOfCASInputs[0]}.txt")
-    f = open(f"{ListOfCASInputs[0]}.txt", "r")
+    CreateFileIfNotExist(f"{ListOfCASInputs[0]}.dnd")
+    f = open(f"{ListOfCASInputs[0]}.dnd", "r")
 
     s = f.read()
     if len(s) == 0:
@@ -917,7 +1011,7 @@ def Read_CAS_SubASSEMBLIES(ListOfCASInputs):
 
 def TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs):
 
-    i = 0
+
     mydata = []
     n = 1  # For Serial No.
     for i in range(len(temp_icode)):
@@ -1228,8 +1322,8 @@ def Enter_SubAssemblies(data):
 
 def Write_SubAssemblies(data):
     global List_ItemCode, List_Item, List_Quantity
-    CreateFileIfNotExist(f"{data[0]}.txt")
-    f = open(f"{data[0]}.txt", "w")
+    CreateFileIfNotExist(f"{data[0]}.dnd")
+    f = open(f"{data[0]}.dnd", "w")
     i = 0
     s = ""
     for n in range(len(List_ItemCode)):
@@ -1364,7 +1458,6 @@ def Menu():
             View(file_Grouped_Inward_Entry)
 
         elif x=="F" or x=="f":
-            Register_MIN()
             View(file_MIN_Entry)
 
         elif x=="#":
