@@ -10,14 +10,27 @@ file_CAS_log="CASItemLog.txt"
 file_CAS_Entry = "CASEntry.txt"
 file_Grouped_Inward_Entry = "GroupedInwardEntry.txt"
 file_MIN_Entry = "MIN_Entry.txt"
+
+
 # Entry Lists
 List_CAS_Entry = []
+List_CAS_Entry_iname = []
+List_CAS_SubAssemblies = []
+
 List_Grouped_Inward_Entry = []
+List_GIE_name = []
+List_GIE_SubAssemblies = []
+
 List_MIN_iCode_Entry = []
+List_MIN_iName_Entry = []
 List_MIN_iValue_Entry = []
+
+
 # MIN ALERT WIDGET
 List_NetStock_Min = []
 List_NetStock_Alert = []
+
+
 #List Buffers
 List_ItemCode = []
 List_Item = []
@@ -28,6 +41,7 @@ List_Supplier = []
 List_Customer = []
 List_Document = []
 List_TimeStamp = []
+
 #=========== CAS LIST BUFFERS ====================
 List_CAS_ItemCode = []
 List_CAS_Item =  []
@@ -41,17 +55,18 @@ def EnterInwardItem():
 # Menu to capture Inward Item details
     while (True):
         while (True):
-            print("\n    ENTER INWARD ITEM DETAILS : ")
-            i = input("    Enter Item Code = ")  # PK
-            n = input("    Enter Item Name = ")
-            q = input("    Enter Quantity = ")
-            sn = input("    Enter Supplier Name = ")
-            dn = input("    Enter Document No. = ")
-            d = input("    Enter Date dd/mm/yy = ")
-            ds = input("    Enter Remarks = ") # Description
-            if (i != "" and n != ""): break
-            else:
-                print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
+            while(True):
+                print("\n    ENTER INWARD ITEM DETAILS : ")
+                i = input("    Enter Item Code = ")  # PK
+                n = input("    Enter Item Name = ")
+                q = input("    Enter Quantity = ")
+                sn = input("    Enter Supplier Name = ")
+                dn = input("    Enter Document No. = ")
+                d = input("    Enter Date dd/mm/yy = ")
+                ds = input("    Enter Remarks = ") # Description
+                if (i != "" and n != ""): break
+                else:
+                    print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
 
             try:
                 temp=int(q)
@@ -159,18 +174,18 @@ def EnterOutwardItem():
 # Menu to capture OUTWARD FILE DETAILS
     while(True):
         while(True):
-
-            print("\n    ENTER OUTWARD ITEM DETAILS : ")
-            i = input("    Enter Item Code = ") #PK
-            n = input("    Enter Item Name = ")
-            q = input("    Enter Quantity = ")
-            cn = input("    Enter Customer Name = ")
-            dn = input("    Enter Document No. = ")
-            d = input("    Enter Date dd/mm/yy = ")
-            ds = input("    Enter Remarks = ")
-            if (i != "" and n != ""): break
-            else:
-                print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
+            while(True):
+                print("\n    ENTER OUTWARD ITEM DETAILS : ")
+                i = input("    Enter Item Code = ") #PK
+                n = input("    Enter Item Name = ")
+                q = input("    Enter Quantity = ")
+                cn = input("    Enter Customer Name = ")
+                dn = input("    Enter Document No. = ")
+                d = input("    Enter Date dd/mm/yy = ")
+                ds = input("    Enter Remarks = ")
+                if (i != "" and n != ""): break
+                else:
+                    print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
             try:
                 temp=int(q)
                 break
@@ -348,9 +363,11 @@ def Subtract_Grouped_Inward_Item(ListOfCASInputs):
 
 
 def Read_CAS_Entry():
-    global List_CAS_Entry
+    global List_CAS_Entry, List_CAS_SubAssemblies, List_CAS_Entry_iname
     # Clear Buffer
     List_CAS_Entry = []
+    List_CAS_Entry_iname = []
+    List_CAS_SubAssemblies = []
     CreateFileIfNotExist(file_CAS_Entry)
 
     f = open(file_CAS_Entry,"r")
@@ -367,14 +384,19 @@ def Read_CAS_Entry():
                 pass  # By pass "" empty item of the list due to \n
             else:
                 List_CAS_Entry.append(temp_list2[0]) # Fill the buffer with CAS item code from the CAS Entry file.
+                List_CAS_Entry_iname.append(temp_list2[1])
+                List_CAS_SubAssemblies.append(temp_list2[2])
+
     f.close()
 
 
 
 def Read_Grouped_Inward_Entry():
-    global List_Grouped_Inward_Entry
+    global List_Grouped_Inward_Entry, List_GIE_name, List_GIE_SubAssemblies
     # Clear Buffer
     List_Grouped_Inward_Entry = []
+    List_GIE_name = []
+    List_GIE_SubAssemblies = []
     CreateFileIfNotExist(file_Grouped_Inward_Entry)
 
     f = open(file_Grouped_Inward_Entry, "r")
@@ -391,6 +413,8 @@ def Read_Grouped_Inward_Entry():
                 pass  # By pass "" empty item of the list due to \n
             else:
                 List_Grouped_Inward_Entry.append(temp_list2[0])  # Fill the buffer with Grouped-item code from the Grouped-Inward-Entry file.
+                List_GIE_name.append(temp_list2[1])
+                List_GIE_SubAssemblies.append(temp_list2[2])
     f.close()
 
 def OutwardItem():
@@ -658,10 +682,11 @@ def TableCASLog():
 
 
 def Read_MIN_Entry():
-    global List_MIN_iCode_Entry, List_MIN_iValue_Entry
+    global List_MIN_iCode_Entry, List_MIN_iValue_Entry, List_MIN_iName_Entry
     # Clear the buffers
     List_MIN_iCode_Entry = []
     List_MIN_iValue_Entry = []
+    List_MIN_iName_Entry = []
 
     CreateFileIfNotExist(file_MIN_Entry)
     f = open(file_MIN_Entry, "r")
@@ -678,7 +703,9 @@ def Read_MIN_Entry():
                 pass  # By pass "" empty item of the list due to \n
             else:
                 List_MIN_iCode_Entry.append(temp_list2[0])
+                List_MIN_iName_Entry.append(temp_list2[1])
                 List_MIN_iValue_Entry.append(temp_list2[2])
+
 
     f.close()
 
@@ -758,13 +785,14 @@ def EnterCAS():
     # Menu to capture CAS Item details
     while (True):
         while (True):
-            print("\n    ENTER COMPLETE ASSEMBLED SHAFTS (CAS) DETAIL : ")
-            i = input("    Enter CAS Product Code = ")  # PK
-            n = input("    Enter CAS Product Name = ")
-            q = input("    Enter Quantity = ")
-            if (i != "" and n != ""): break
-            else:
-                print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
+            while(True):
+                print("\n    ENTER COMPLETE ASSEMBLED SHAFTS (CAS) DETAIL : ")
+                i = input("    Enter CAS Product Code = ")  # PK
+                n = input("    Enter CAS Product Name = ")
+                q = input("    Enter Quantity = ")
+                if (i != "" and n != ""): break
+                else:
+                    print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
             try:
                 temp = int(q)
                 break
@@ -958,6 +986,240 @@ def CAS():
         WriteCAS() # WRITE THE UPDATED BUFFERS BACK TO CAS STOCK FILE.
 
 
+def Enter_ENTRY(CAT):
+    # Menu to capture CATEGORY (CAS/ GIE) ENTRY details with SUB ASSEMBILIES
+    name=""
+    if CAT == "CAS":
+        name = "COMPLETE ASSEMBLED SHAFTS"
+    if CAT == "GIE":
+        name = "GROUPED INWARD ENTRY"
+    while (True):
+        while (True):
+            while(True):
+                print(f"\n    REGISTER {CAT} - {name} DETAIL : ")
+                i = input(f"    Enter {CAT} Product Code = ")  # PK
+                n = input(f"    Enter {CAT} Product Name = ")
+                q = input(f"    Enter TOTAL NUMBER OF SUB-ASSEMBLIES for {i} = ")
+                # ==========================================
+                if (i != "" and n != ""): break
+                else:
+                    print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
+                # ===========================================
+            try:
+                temp = int(q)
+                break
+            except:
+                print("\n\n\n    ERROR ! PLEASE ENTER QUANTITY IN INTEGERS.\n\n\n")
+                # ===========================================
+
+        i = i.upper()  # MAKE CODE UPPERCASE
+        print(f"\n    CONFIRM {CAT} - {name} DETAIL: \n"
+              f"    {CAT} PRODUCT CODE : {i}\n"
+              f"    {CAT} PRODUCT NAME : {n}\n"
+              f"    TOTAL NUMBER OF SUB-ASSEMBLIES : {q}\n"
+              )
+        confirm = input("    Press 1 to confirm: ")
+        if confirm == "1": break
+        #=====================================================================
+    return [i,n,q]
+
+def Write_Entry(data, filename, CAT):
+    global  List_CAS_Entry, List_Grouped_Inward_Entry, List_MIN_iCode_Entry, List_MIN_iName_Entry, List_MIN_iValue_Entry, List_CAS_SubAssemblies, List_CAS_Entry_iname, List_GIE_SubAssemblies, List_GIE_name
+    flg=0
+    if CAT == "CAS":
+        Read_CAS_Entry()
+        for item1 in List_CAS_Entry:
+            if (item1 == data[0]):
+
+                print(f"\n\nALERT: CAS {data[0]} - {data[1]} Already Registered!")
+                replace = input(f"Enter 1 - To Replace Existing CAS {data[0]} - {data[1]} Definition : ")
+                if replace == "1":
+                    flg = 1
+                    # Write
+                    i1=List_CAS_Entry.index(item1) # get index
+                    List_CAS_SubAssemblies[i1] = data[2] #SubeAssemblies Updated.
+                    f = open(filename, "w")
+                    i = 0
+                    s = ""
+                    for n in range(len(List_CAS_Entry)):
+                        s = s + f"\n{List_CAS_Entry[i]} ---#--- {List_CAS_Entry_iname[i]} ---#--- {List_CAS_SubAssemblies[i]}"
+                        i = i + 1
+                    f.write(s)
+                    f.close()
+                    return 1
+                else: return 0
+
+
+
+    elif CAT == "GIE":
+        Read_Grouped_Inward_Entry()
+        for item1 in List_Grouped_Inward_Entry:
+            if (item1 == data[0]):
+                print(f"\n\nALERT: GIE {data[0]} - {data[1]} Already Registered!")
+                replace = input(f"Enter 1 - To Replace Existing GIE {data[0]} - {data[1]} Definition : ")
+                if replace == "1":
+                    flg = 1
+                    # Write
+                    i1 = List_Grouped_Inward_Entry.index(item1)  # get index
+                    List_GIE_SubAssemblies[i1] = data[2]  # Sub-Assemblies Updated.
+                    f = open(filename, "w")
+                    i = 0
+                    s = ""
+                    for n in range(len(List_Grouped_Inward_Entry)):
+                        s = s + f"\n{List_Grouped_Inward_Entry[i]} ---#--- {List_GIE_name[i]} ---#--- {List_GIE_SubAssemblies[i]}"
+                        i = i + 1
+                    f.write(s)
+                    f.close()
+                    return 1
+                else: return 0
+
+    else:
+        if(CAT == "MIN"):
+            Read_MIN_Entry()
+            for item1 in List_MIN_iCode_Entry:
+                if (item1 == data[0]):
+                    print(f"\n\nALERT: MIN | {data[0]} - {data[1]} Already Registered!")
+                    replace = input(f"Enter 1 - To Replace Existing MIN | {data[0]} - {data[1]} Definition : ")
+                    if replace == "1":
+                        flg = 1
+                        # Write
+                        i1 = List_MIN_iCode_Entry.index(item1)  # get index
+                        List_MIN_iValue_Entry[i1] = data[2]  # SubeAssemblies Updated.
+                        f = open(filename, "w")
+                        i = 0
+                        s = ""
+                        for n in range(len(List_MIN_iCode_Entry)):
+                            s = s + f"\n{List_MIN_iCode_Entry[i]} ---#--- {List_MIN_iName_Entry[i]} ---#--- {List_MIN_iValue_Entry[i]}"
+                            i = i + 1
+                        f.write(s)
+                        f.close()
+                        return 1
+                    else: return 0
+
+        else:
+            print("ERROR: CATEGORY CAS/GIE/MIN DIDNT MATCH ANY IN WRITE_ENTRY()")
+            return 0
+
+
+    if flg == 0 :
+        f = open(filename, "a")
+        s = f"\n{data[0]} ---#--- {data[1]} ---#--- {data[2]}"
+        f.write(s)
+        f.close()
+        return 1
+
+
+def Enter_SubAssemblies(data):
+    global List_ItemCode, List_Item, List_Quantity
+    # Clear Buffers
+    List_Item = []
+    List_Quantity = []
+    List_ItemCode = []
+    p= 1
+    while(p <= data[2]):
+        while (True):
+            while (True):
+                while (True):
+                    print(f"\n    ===== SUB-ASSEMBLY NO - {p} of {data[2]} for {data[0]}-{data[1]} =====")
+                    i = input("    ENTER ITEM CODE = ")  # PK
+                    n = input("    ENTER ITEM NAME = ")
+                    q = input(f"   ENTER ITEM QUANTITY = ")
+                    # ==========================================
+                    if (i != "" and n != ""):
+                        break
+                    else:
+                        print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
+                    # ===========================================
+                try:
+                    temp = int(q)
+                    break
+                except:
+                    print("\n\n\n    ERROR ! PLEASE ENTER QUANTITY IN INTEGERS.\n\n\n")
+                    # ===========================================
+
+            i = i.upper()  # MAKE CODE UPPERCASE
+            print(f"\n    ===== SUB-ASSEMBLY NO - {p} of {data[2]} for {data[0]}-{data[1]} ====="
+                  f"    ITEM CODE : {i}\n"
+                  f"    ITEM NAME : {n}\n"
+                  f"    ITEM QUANTITY : {q}\n"
+                  )
+            confirm = input("    Press 1 to confirm: ")
+            if confirm == "1": break
+        List_ItemCode.append(i)
+        List_Item.append(n)
+        List_Quantity.append(q)
+        p=p+1
+
+def Write_SubAssemblies(data):
+    global List_ItemCode, List_Item, List_Quantity
+    CreateFileIfNotExist(f"{data[0]}.txt")
+    f = open(f"{data[0]}.txt", "w")
+    i = 0
+    s = ""
+    for n in range(len(List_ItemCode)):
+        s = s + f"\n{List_ItemCode[i]} ---#--- {List_Item[i]} ---#--- {List_Quantity[i]}"
+        i = i + 1
+    f.write(s)
+    f.close()
+    print(f"\n\n    SUCCESSFUL REGISTRATION OF {data[0]} - {data[1]} WITH {data[2]} SUB-ASSEMBLIES !\n\n")
+
+
+
+
+def Register_CAS():
+    global file_CAS_Entry
+    temp1= Enter_ENTRY("CAS")
+    o = Write_Entry(temp1, file_CAS_Entry, "CAS")
+    if o == 1:
+        Enter_SubAssemblies(temp1)
+        Write_SubAssemblies(temp1)
+
+def Register_GIE():
+    global file_Grouped_Inward_Entry
+    temp1= Enter_ENTRY("GIE")
+    o =Write_Entry(temp1, file_Grouped_Inward_Entry, "GIE")
+    if o == 1:
+        Enter_SubAssemblies(temp1)
+        Write_SubAssemblies(temp1)
+
+def Enter_MIN_Entry():
+    while (True):
+        while (True):
+            while(True):
+                print(f"\n    REGISTER MINIMUM QUANTITY OF AN ITEM FOR NET-STOCK: ")
+                i = input(f"    Enter Item Code = ")  # PK
+                n = input(f"    Enter Item Name = ")
+                q = input(f"    Enter MINIMUM Quantity Needed = ")
+                # ==========================================
+                if (i != "" and n != ""): break
+                else:
+                    print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
+                # ===========================================
+            try:
+                temp = int(q)
+                break
+            except:
+                print("\n\n\n    ERROR ! PLEASE ENTER QUANTITY IN INTEGERS.\n\n\n")
+                # ===========================================
+
+        i = i.upper()  # MAKE CODE UPPERCASE
+        print(f"\n    CONFIRM  MINIMUM QUANTITY OF AN ITEM FOR NET-STOCK: "
+              f"    ITEM CODE : {i}\n"
+              f"    ITEM NAME : {n}\n"
+              f"    MINIMUM QUANTITY NEEDED : {q}\n"
+              )
+        confirm = input("    Press 1 to confirm: ")
+        if confirm == "1": break
+        #=====================================================================
+    return [i,n,q]
+
+
+
+def Register_MIN():
+    global file_MIN_Entry
+    temp1= Enter_MIN_Entry()
+    o = Write_Entry(temp1, file_MIN_Entry, "MIN")
+
 #========================================================================================================
 #MENU
 def Menu():
@@ -965,8 +1227,8 @@ def Menu():
     while(True):
         print("\n\n*** DND PLOUGH - AGRICULTURAL SHAFTS AND ACCESSORIES ***\n\n"
               "======================== MENU ======================\n"
-              "    ENTER 1 - ENTER INWARD AN ITEM\n"
-              "    ENTER 2 - ENTER OUTWARD AN ITEM\n"
+              "    ENTER 1 - ENTER AN INWARD ITEM\n"
+              "    ENTER 2 - ENTER AN OUTWARD ITEM\n"
               "    ENTER 3 - ENTER COMPLETE ASSEMBLED SHAFTS (CAS)\n\n"
               "    ENTER 4 - VIEW INWARD LOG\n"
               "    ENTER 5 - VIEW OUTWARD LOG\n"
@@ -974,6 +1236,9 @@ def Menu():
               "    ENTER 7 - VIEW INWARD STOCK\n"
               "    ENTER 8 - VIEW NET STOCK\n"
               "    Enter 9 - VIEW CAS STOCK\n\n"
+              "    Enter A - REGISTER NEW CAS\n"
+              "    ENTER B - REGISTER NEW GROUPED-INWARD-ENTRY (GIE)\n"
+              "    ENTER C - REGISTER NEW MIN QUANTITY\n\n"
               "    ENTER # - TO EXIT APPLICATION\n"
               "====================================================\n")
         x=input("    Enter: ")
@@ -1003,6 +1268,15 @@ def Menu():
 
         elif x=="9":
             View(file_CAS_stock)
+
+        elif x=="A" or x=="a":
+            Register_CAS()
+
+        elif x=="B" or x=="b":
+            Register_GIE()
+
+        elif x=="C" or x=="c":
+            Register_MIN()
 
         elif x=="#":
             break
