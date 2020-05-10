@@ -1,5 +1,6 @@
 from tabulate import tabulate
 # Attributes = ["Item Code", "Item", "Quantity", "SUPPLIER/CUSTOMER NAME", "DOCUMENT NO.", "Date", "Remarks"]
+PassWord = "testdndplough"
 # files
 file_inward_log="InwardItemLog.txt"
 file_outward_log="OutwardItemLog.txt"
@@ -747,6 +748,69 @@ def Widget_MINALERT():
                 List_NetStock_Alert.append("-----------")
 
 
+def TableCASEntry():
+    global List_CAS_Entry, List_CAS_Entry_iname, List_CAS_SubAssemblies
+    i = 0
+    mydata = []
+    n = 1  # For Serial No.
+    for i in range(len(List_CAS_Entry)):
+        temp_list = []
+        # CHANGE THE ORDER OF STATEMENTS TO CHANGE THE ORDER OF COLUMNS IN OUTPUT.
+        temp_list.append(n)  # For Serial No.
+        temp_list.append(List_CAS_Entry[i])
+        temp_list.append(List_CAS_Entry_iname[i])
+        temp_list.append(List_CAS_SubAssemblies[i])
+        # =======================================================================
+        n = n + 1  # INCREMENT SERIAL NO.
+        temp_tuple = tuple(temp_list)
+        mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
+
+    headers = ["SR NO.", "CAS-CODE", "CAS-NAME", "SUB-ASSEMBLIES"]
+    print("\n\n\n    *** REGISTERED ENTRIES TABLE of COMPLETE ASSEMBLED SHAFTS (CAS) ***")
+    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+def TableGIE():
+    global List_Grouped_Inward_Entry, List_GIE_name, List_GIE_SubAssemblies
+    i = 0
+    mydata = []
+    n = 1  # For Serial No.
+    for i in range(len(List_Grouped_Inward_Entry)):
+        temp_list = []
+        # CHANGE THE ORDER OF STATEMENTS TO CHANGE THE ORDER OF COLUMNS IN OUTPUT.
+        temp_list.append(n)  # For Serial No.
+        temp_list.append(List_Grouped_Inward_Entry[i])
+        temp_list.append(List_GIE_name[i])
+        temp_list.append(List_GIE_SubAssemblies[i])
+        # =======================================================================
+        n = n + 1  # INCREMENT SERIAL NO.
+        temp_tuple = tuple(temp_list)
+        mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
+
+    headers = ["SR NO.", "GIE-CODE", "GIE-NAME", "SUB-ASSEMBLIES"]
+    print("\n\n\n    *** REGISTERED ENTRIES TABLE of GROUPED INWARD ENTRIES (GIE) ***")
+    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+def TableMIN():
+    global List_MIN_iCode_Entry, List_MIN_iName_Entry, List_MIN_iValue_Entry
+    i = 0
+    mydata = []
+    n = 1  # For Serial No.
+    for i in range(len(List_MIN_iCode_Entry)):
+        temp_list = []
+        # CHANGE THE ORDER OF STATEMENTS TO CHANGE THE ORDER OF COLUMNS IN OUTPUT.
+        temp_list.append(n)  # For Serial No.
+        temp_list.append(List_MIN_iCode_Entry[i])
+        temp_list.append(List_MIN_iName_Entry[i])
+        temp_list.append(List_MIN_iValue_Entry[i])
+        # =======================================================================
+        n = n + 1  # INCREMENT SERIAL NO.
+        temp_tuple = tuple(temp_list)
+        mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
+
+    headers = ["SR NO.", "I-CODE", "I-NAME", "MIN QUANTITY"]
+    print("\n\n\n    *** REGISTERED ENTRIES TABLE of MINIMUM QUANTITIES FOR NET-STOCK (MIN) ***")
+    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
 def View(file):
 
     #============= Fill the required buffers and Tabulate==============================
@@ -774,6 +838,18 @@ def View(file):
     elif file==file_CAS_log:
         ReadCASLog()
         TableCASLog()
+
+    elif file==file_CAS_Entry:
+        Read_CAS_Entry()
+        TableCASEntry()
+
+    elif file==file_Grouped_Inward_Entry:
+        Read_Grouped_Inward_Entry()
+        TableGIE()
+
+    elif file==file_MIN_Entry:
+        Read_MIN_Entry()
+        TableMIN()
 
     else:
         print("    ERROR MATCHING FILE NAME")
@@ -1239,6 +1315,9 @@ def Menu():
               "    Enter A - REGISTER NEW CAS\n"
               "    ENTER B - REGISTER NEW GROUPED-INWARD-ENTRY (GIE)\n"
               "    ENTER C - REGISTER NEW MIN QUANTITY\n\n"
+              "    ENTER D - VIEW REGISTERED CAS Entries\n"
+              "    ENTER E - VIEW REGISTERED GIE Entries\n"
+              "    ENTER F - VIEW REGISTERED MIN Entries\n\n"
               "    ENTER # - TO EXIT APPLICATION\n"
               "====================================================\n")
         x=input("    Enter: ")
@@ -1278,9 +1357,25 @@ def Menu():
         elif x=="C" or x=="c":
             Register_MIN()
 
+        elif x=="D" or x=="d":
+            View(file_CAS_Entry)
+
+        elif x=="E" or x=="e":
+            View(file_Grouped_Inward_Entry)
+
+        elif x=="F" or x=="f":
+            Register_MIN()
+            View(file_MIN_Entry)
+
         elif x=="#":
             break
         else: print("\n    PLEASE ENTER CORRECT INPUT!\n")
 
+def PASSWORD():
+    global PassWord
+    while(True):
+        print("\n\n*** DND PLOUGH - AGRICULTURAL SHAFTS AND ACCESSORIES ***\n")
+        if PassWord == (input("    ENTER PASSWORD: ")):
+            return True
 
-Menu()
+if PASSWORD(): Menu()
