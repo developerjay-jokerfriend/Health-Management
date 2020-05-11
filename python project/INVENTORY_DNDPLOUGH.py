@@ -48,6 +48,9 @@ List_CAS_ItemCode = []
 List_CAS_Item =  []
 List_CAS_Quantity = []
 
+def GoToMenu(inpt):
+    if(inpt.upper() == "U"): Menu()
+
 def CreateFileIfNotExist(file):
     f= open(file,"a")
     f.close()
@@ -59,12 +62,19 @@ def EnterInwardItem():
             while(True):
                 print("\n    ENTER INWARD ITEM DETAILS : ")
                 i = input("    Enter Item Code = ")  # PK
+                GoToMenu(i)
                 n = input("    Enter Item Name = ")
+                GoToMenu(n)
                 q = input("    Enter Quantity = ")
+                GoToMenu(q)
                 sn = input("    Enter Supplier Name = ")
+                GoToMenu(sn)
                 dn = input("    Enter Document No. = ")
+                GoToMenu(dn)
                 d = input("    Enter Date dd/mm/yy = ")
+                GoToMenu(d)
                 ds = input("    Enter Remarks = ") # Description
+                GoToMenu(ds)
                 if (i != "" and n != ""): break
                 else:
                     print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
@@ -85,6 +95,7 @@ def EnterInwardItem():
               f"    DATE : {d}\n"
               f"    REMARKS : {ds}\n")
         confirm = input("    Press 1 to confirm INWARD entry: ")
+        GoToMenu(confirm)
         if confirm == "1" : break
 
     return [i, n, q, d, ds, sn, dn ]  # dont change the list item index order here.
@@ -178,12 +189,19 @@ def EnterOutwardItem():
             while(True):
                 print("\n    ENTER OUTWARD ITEM DETAILS : ")
                 i = input("    Enter Item Code = ") #PK
+                GoToMenu(i)
                 n = input("    Enter Item Name = ")
+                GoToMenu(n)
                 q = input("    Enter Quantity = ")
+                GoToMenu(q)
                 cn = input("    Enter Customer Name = ")
+                GoToMenu(cn)
                 dn = input("    Enter Document No. = ")
+                GoToMenu(dn)
                 d = input("    Enter Date dd/mm/yy = ")
+                GoToMenu(d)
                 ds = input("    Enter Remarks = ")
+                GoToMenu(ds)
                 if (i != "" and n != ""): break
                 else:
                     print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
@@ -203,6 +221,7 @@ def EnterOutwardItem():
               f"    DATE : {d}\n"
               f"    REMARKS : {ds}\n")
         confirm = input("    Press 1 to confirm OUTWARD entry: ")
+        GoToMenu(confirm)
         if confirm == "1": break
 
     return [i, n, q, d, ds, cn, dn] # dont change the list item index order here.
@@ -857,8 +876,10 @@ def TableCASEntry():
     headers = ["SR NO.", "CAS-CODE", "CAS-NAME", "SUB-ASSEMBLIES"]
     print("\n\n\n    *** REGISTERED ENTRIES TABLE of COMPLETE ASSEMBLED SHAFTS (CAS) ***")
     print("\n\n", tabulate(mydata, headers=headers), "\n\n")
-    temp_input = input("\n\n    *** ENTER CAS-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
-    TableShowSubAssemblies(temp_input.upper(), "CAS")
+    if(len(List_CAS_Entry) != 0):
+        temp_input = input("\n\n    *** ENTER CAS-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
+        GoToMenu(temp_input)
+        TableShowSubAssemblies(temp_input.upper(), "CAS")
 
 def TableGIE():
     global List_Grouped_Inward_Entry, List_GIE_name, List_GIE_SubAssemblies
@@ -881,8 +902,10 @@ def TableGIE():
     print("\n\n\n    *** REGISTERED ENTRIES TABLE of GROUPED INWARD ENTRIES (GIE) ***")
     print("\n\n", tabulate(mydata, headers=headers), "\n\n")
 
-    temp_input = input("\n\n    *** ENTER GIE-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
-    TableShowSubAssemblies(temp_input.upper(),"GIE")
+    if(len(List_Grouped_Inward_Entry) != 0):
+        temp_input = input("\n\n    *** ENTER GIE-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
+        GoToMenu(temp_input)
+        TableShowSubAssemblies(temp_input.upper(),"GIE")
 
 def TableMIN():
     global List_MIN_iCode_Entry, List_MIN_iName_Entry, List_MIN_iValue_Entry
@@ -958,8 +981,11 @@ def EnterCAS():
             while(True):
                 print("\n    ENTER COMPLETE ASSEMBLED SHAFTS (CAS) DETAIL : ")
                 i = input("    Enter CAS Product Code = ")  # PK
+                GoToMenu(i)
                 n = input("    Enter CAS Product Name = ")
+                GoToMenu(n)
                 q = input("    Enter Quantity = ")
+                GoToMenu(q)
                 if (i != "" and n != ""): break
                 else:
                     print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
@@ -976,6 +1002,7 @@ def EnterCAS():
               f"    QUANTITY : {q}\n"
               )
         confirm = input("    Press 1 to confirm CAS entry: ")
+        GoToMenu(confirm)
         if confirm == "1": break
 
     return [i, n, q]  # dont change the list item index order here.
@@ -1168,8 +1195,11 @@ def Enter_ENTRY(CAT):
             while(True):
                 print(f"\n    REGISTER {CAT} - {name} DETAIL : ")
                 i = input(f"    Enter {CAT} Product Code = ")  # PK
+                GoToMenu(i)
                 n = input(f"    Enter {CAT} Product Name = ")
+                GoToMenu(n)
                 q = input(f"    Enter TOTAL NUMBER OF SUB-ASSEMBLIES for {i} = ")
+                GoToMenu(q)
                 # ==========================================
                 if (i != "" and n != ""): break
                 else:
@@ -1189,6 +1219,7 @@ def Enter_ENTRY(CAT):
               f"    TOTAL NUMBER OF SUB-ASSEMBLIES : {q}\n"
               )
         confirm = input("    Press 1 to confirm: ")
+        GoToMenu(confirm)
         if confirm == "1": break
         #=====================================================================
     return [i,n,q]
@@ -1203,6 +1234,7 @@ def Write_Entry(data, filename, CAT):
 
                 print(f"\n\nALERT: CAS {data[0]} - {data[1]} Already Registered!")
                 replace = input(f"Enter 1 - To Replace Existing CAS {data[0]} - {data[1]} Definition : ")
+                GoToMenu(replace)
                 if replace == "1":
                     flg = 1
                     # Write
@@ -1227,6 +1259,7 @@ def Write_Entry(data, filename, CAT):
             if (item1 == data[0]):
                 print(f"\n\nALERT: GIE {data[0]} - {data[1]} Already Registered!")
                 replace = input(f"Enter 1 - To Replace Existing GIE {data[0]} - {data[1]} Definition : ")
+                GoToMenu(replace)
                 if replace == "1":
                     flg = 1
                     # Write
@@ -1250,6 +1283,7 @@ def Write_Entry(data, filename, CAT):
                 if (item1 == data[0]):
                     print(f"\n\nALERT: MIN | {data[0]} - {data[1]} Already Registered!")
                     replace = input(f"Enter 1 - To Replace Existing MIN | {data[0]} - {data[1]} Definition : ")
+                    GoToMenu(replace)
                     if replace == "1":
                         flg = 1
                         # Write
@@ -1286,14 +1320,17 @@ def Enter_SubAssemblies(data):
     List_Quantity = []
     List_ItemCode = []
     p= 1
-    while(p <= data[2]):
+    while(p <= int(data[2])):
         while (True):
             while (True):
                 while (True):
                     print(f"\n    ===== SUB-ASSEMBLY NO - {p} of {data[2]} for {data[0]}-{data[1]} =====")
                     i = input("    ENTER ITEM CODE = ")  # PK
+                    GoToMenu(i)
                     n = input("    ENTER ITEM NAME = ")
-                    q = input(f"   ENTER ITEM QUANTITY = ")
+                    GoToMenu(n)
+                    q = input(f"    ENTER ITEM QUANTITY = ")
+                    GoToMenu(q)
                     # ==========================================
                     if (i != "" and n != ""):
                         break
@@ -1308,13 +1345,15 @@ def Enter_SubAssemblies(data):
                     # ===========================================
 
             i = i.upper()  # MAKE CODE UPPERCASE
-            print(f"\n    ===== SUB-ASSEMBLY NO - {p} of {data[2]} for {data[0]}-{data[1]} ====="
+
+            print(f"\n    ===== SUB-ASSEMBLY NO - {p} of {data[2]} for {data[0]}-{data[1]} =====\n"
                   f"    ITEM CODE : {i}\n"
                   f"    ITEM NAME : {n}\n"
                   f"    ITEM QUANTITY : {q}\n"
                   )
             confirm = input("    Press 1 to confirm: ")
             if confirm == "1": break
+            GoToMenu(confirm)
         List_ItemCode.append(i)
         List_Item.append(n)
         List_Quantity.append(q)
@@ -1358,8 +1397,11 @@ def Enter_MIN_Entry():
             while(True):
                 print(f"\n    REGISTER MINIMUM QUANTITY OF AN ITEM FOR NET-STOCK: ")
                 i = input(f"    Enter Item Code = ")  # PK
+                GoToMenu(i)
                 n = input(f"    Enter Item Name = ")
+                GoToMenu(n)
                 q = input(f"    Enter MINIMUM Quantity Needed = ")
+                GoToMenu(q)
                 # ==========================================
                 if (i != "" and n != ""): break
                 else:
@@ -1373,12 +1415,13 @@ def Enter_MIN_Entry():
                 # ===========================================
 
         i = i.upper()  # MAKE CODE UPPERCASE
-        print(f"\n    CONFIRM  MINIMUM QUANTITY OF AN ITEM FOR NET-STOCK: "
+        print(f"\n    CONFIRM  MINIMUM QUANTITY OF AN ITEM FOR NET-STOCK:\n"
               f"    ITEM CODE : {i}\n"
               f"    ITEM NAME : {n}\n"
               f"    MINIMUM QUANTITY NEEDED : {q}\n"
               )
         confirm = input("    Press 1 to confirm: ")
+        GoToMenu(confirm)
         if confirm == "1": break
         #=====================================================================
     return [i,n,q]
@@ -1415,6 +1458,8 @@ def Menu():
               "    ENTER # - TO EXIT APPLICATION\n"
               "====================================================\n")
         x=input("    Enter: ")
+        GoToMenu(x)
+
         if x=="1":
             InwardItem()
 
