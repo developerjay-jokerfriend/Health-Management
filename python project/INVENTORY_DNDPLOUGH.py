@@ -11,6 +11,7 @@ file_CAS_log="CASItemLog.dnd"
 file_CAS_Entry = "CASEntry.dnd"
 file_Grouped_Inward_Entry = "GroupedInwardEntry.dnd"
 file_MIN_Entry = "MIN_Entry.dnd"
+file_outward_stock = "OutwardItemStock.dnd"
 
 
 # Entry Lists
@@ -152,7 +153,7 @@ def WriteInwardItem():
     f.close()
 
 def AddItem(InputList):
-# Inward Item is is added into list bufferes  / the inward stock / CAS STOCK which ever party calls...
+# Inward Item\Outward Item is is added into list bufferes  / the inward stock / Outward Stock / CAS STOCK which ever party calls...
     global List_ItemCode,List_Item,List_Quantity
     # When item is present in List Buffers/file
     if InputList[0] in List_ItemCode:
@@ -437,6 +438,47 @@ def Read_Grouped_Inward_Entry():
                 List_GIE_SubAssemblies.append(temp_list2[2])
     f.close()
 
+def ReadOutwardItem():
+    # Load the list buffers with the fresh data from the Outward Item Stock File.
+    global List_ItemCode, List_Item, List_Quantity
+    # Clear the list buffers.
+    List_ItemCode = []
+    List_Item = []
+    List_Quantity = []
+
+    CreateFileIfNotExist(file_outward_stock)
+    f = open(file_outward_stock, "r")
+    s = f.read()
+    if len(s) == 0:
+        pass  # if file is empty
+    else:  # If file is not Empty
+        temp_list1 = s.split("\n")  # got all rows in the list.
+        for item in temp_list1:  # for each row in list
+            temp_str = str(item)
+            temp_list2 = temp_str.split(" ---#--- ")  # got attributes of a row as list
+
+            if temp_list2[0] == "":
+                pass  # By pass "" empty item of the list due to \n
+            else:
+                List_ItemCode.append(temp_list2[0])
+                List_Item.append(temp_list2[1])
+                List_Quantity.append(temp_list2[2])
+    f.close()
+
+def WriteOutwardItem():
+    # Updates the outward stock file using content of List Buffers.
+    global List_ItemCode, List_Item, List_Quantity
+    CreateFileIfNotExist(file_outward_stock)
+    f = open(file_outward_stock, "w")
+    i = 0
+    s = ""
+    for n in range(len(List_ItemCode)):
+        s = s + f"\n{List_ItemCode[i]} ---#--- {List_Item[i]} ---#--- {List_Quantity[i]}"
+        i = i + 1
+    f.write(s)
+    f.close()
+
+
 def OutwardItem():
 # Outwards an item if possible and makes outward log and updates net stock file.
     temp1 = EnterOutwardItem()
@@ -445,13 +487,25 @@ def OutwardItem():
     Read_Grouped_Inward_Entry()
     #===========================================================
     if temp1[0] in List_CAS_Entry: # If input item is present in list of CAS Entry.
-        if (Subtract_CAS_Stock(temp1)): LogOutwardItem(temp1)
+        if (Subtract_CAS_Stock(temp1)):
+            LogOutwardItem(temp1)
+            ReadOutwardItem()
+            AddItem(temp1)
+            WriteOutwardItem()  # Write down the Outward Stock file with updates.
 
     elif temp1[0] in List_Grouped_Inward_Entry: # If input item is present in the list of Grouped Inward Entry.
-        if (Subtract_Grouped_Inward_Item(temp1)): LogOutwardItem(temp1)
+        if (Subtract_Grouped_Inward_Item(temp1)):
+            LogOutwardItem(temp1)
+            ReadOutwardItem()
+            AddItem(temp1)
+            WriteOutwardItem()  # Write down the Outward Stock file with updates.
 
     else:
-        if(SubtractItem(temp1)): LogOutwardItem(temp1) # if feasible to outward then only log
+        if(SubtractItem(temp1)):
+            LogOutwardItem(temp1) # if feasible to outward then only log
+            ReadOutwardItem()
+            AddItem(temp1)
+            WriteOutwardItem()  # Write down the Outward Stock file with updates.
 
     #================================
 
@@ -928,6 +982,30 @@ def TableMIN():
     print("\n\n\n    *** REGISTERED ENTRIES TABLE of MINIMUM QUANTITIES FOR NET-STOCK (MIN) ***")
     print("\n\n", tabulate(mydata, headers=headers), "\n\n")
 
+
+
+def TableOutwardStock():
+    global List_ItemCode, List_Item, List_Quantity
+
+    mydata = []
+    n = 1  # For Serial No.
+    for i in range(len(List_ItemCode)):
+        temp_list = []
+        # CHANGE THE ORDER OF STATEMENTS TO CHANGE THE ORDER OF COLUMNS IN OUTPUT.
+        temp_list.append(n)  # For Serial No.
+        temp_list.append(List_ItemCode[i])
+        temp_list.append(List_Item[i])
+        temp_list.append(List_Quantity[i])
+        # =======================================================================
+        n = n + 1  # INCREMENT SERIAL NO.
+        temp_tuple = tuple(temp_list)
+        mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
+
+    headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
+    print("\n\n\n    *** OUTWARD-STOCK TABLE ***")
+    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+
 def View(file):
 
     #============= Fill the required buffers and Tabulate==============================
@@ -967,6 +1045,10 @@ def View(file):
     elif file==file_MIN_Entry:
         Read_MIN_Entry()
         TableMIN()
+
+    elif file==file_outward_stock :
+        ReadOutwardItem()
+        TableOutwardStock()
 
     else:
         print("    ERROR MATCHING FILE NAME")
@@ -1447,8 +1529,9 @@ def Menu():
               "    ENTER 5 - VIEW OUTWARD LOG\n"
               "    ENTER 6 - VIEW CAS LOG\n\n"
               "    ENTER 7 - VIEW INWARD STOCK\n"
-              "    ENTER 8 - VIEW NET STOCK\n"
+              "    ENTER 8 - VIEW OUTWARD STOCK\n"
               "    Enter 9 - VIEW CAS STOCK\n\n"
+              "    Enter 10 - VIEW NET STOCK\n\n"
               "    Enter A - REGISTER NEW CAS\n"
               "    ENTER B - REGISTER NEW GROUPED-INWARD-ENTRY (GIE)\n"
               "    ENTER C - REGISTER NEW MIN QUANTITY\n\n"
@@ -1482,10 +1565,13 @@ def Menu():
             View(file_inward_stock)
 
         elif x=="8":
-            View(file_net_stock)
+            View(file_outward_stock)
 
         elif x=="9":
             View(file_CAS_stock)
+
+        elif x=="10":
+            View(file_net_stock)
 
         elif x=="A" or x=="a":
             Register_CAS()
