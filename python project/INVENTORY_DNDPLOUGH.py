@@ -1,3 +1,4 @@
+import pandas as pd
 from tabulate import tabulate
 # Attributes = ["Item Code", "Item", "Quantity", "SUPPLIER/CUSTOMER NAME", "DOCUMENT NO.", "Date", "Remarks"]
 PassWord = "testdndplough"
@@ -608,8 +609,16 @@ def TableOutwardLog():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "OUTWARD-ENTRY-TIME", "I-CODE", "I-NAME", "QTY.","CUSTOMER", "DOC NO.", "OUTWARD-DATE", "REMARKS"]
-    print("\n\n\n    *** OUTWARD-LOG TABLE ***")
-    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    try:
+        df = pd.DataFrame(mydata, columns=headers)
+        df.to_excel("EXCEL_OUTPUT/OUTWARD-LOG-TABLE.xlsx", index=False, sheet_name="OUTWARD-LOG TABLE")
+        print("\n\n\n    *** OUTWARD-LOG TABLE ***")
+        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    except:
+        print("\n\n    *** PLEASE CLOSE THE FILE - OUTWARD-LOG-TABLE.xlsx - and try again! ***\n\n")
+
+
+
 
 
 def TableInwardLog():
@@ -635,8 +644,15 @@ def TableInwardLog():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "INWARD-ENTRY-TIME", "I-CODE", "I-NAME", "QTY.","SUPPLIER", "DOC NO.", "INWARD-DATE", "REMARKS"]
-    print("\n\n\n    *** INWARD-LOG TABLE ***")
-    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    try:
+        df = pd.DataFrame(mydata, columns=headers)
+        df.to_excel("EXCEL_OUTPUT/INWARD-LOG-TABLE.xlsx", index=False, sheet_name="INWARD-LOG TABLE")
+        print("\n\n\n    *** INWARD-LOG TABLE ***")
+        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    except:
+        print("\n\n    *** PLEASE CLOSE THE FILE - INWARD-LOG-TABLE.xlsx - and try again! ***\n\n")
+
+
 
 def TableNetStock():
     global List_ItemCode, List_Item, List_Quantity, List_NetStock_Min, List_NetStock_Alert
@@ -658,8 +674,15 @@ def TableNetStock():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.","I-CODE", "I-NAME", "QTY.", "MIN", "ALERT"]
-    print("\n\n\n    *** NET-STOCK TABLE ***")
-    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    try:
+        df = pd.DataFrame(mydata, columns=headers)
+        df.to_excel("EXCEL_OUTPUT/NET-STOCK-TABLE.xlsx", index=False, sheet_name="NET-STOCK TABLE")
+        print("\n\n\n    *** NET-STOCK TABLE ***")
+        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    except:
+        print("\n\n    *** PLEASE CLOSE THE FILE - NET-STOCK-TABLE.xlsx - and try again! ***\n\n")
+
+
 
 def TableInwardStock():
     global  List_ItemCode, List_Item, List_Quantity
@@ -679,8 +702,15 @@ def TableInwardStock():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
-    print("\n\n\n    *** INWARD-STOCK TABLE ***")
-    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    try:
+        df = pd.DataFrame(mydata, columns=headers)
+        df.to_excel("EXCEL_OUTPUT/INWARD-STOCK-TABLE.xlsx", index=False, sheet_name="INWARD-STOCK TABLE")
+        print("\n\n\n    *** INWARD-STOCK TABLE ***")
+        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    except:
+        print("\n\n    *** PLEASE CLOSE THE FILE - INWARD-STOCK-TABLE.xlsx - and try again! ***\n\n")
+
+
 
 def TableCASStock():
     global List_ItemCode, List_Item, List_Quantity
@@ -700,8 +730,15 @@ def TableCASStock():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
-    print("\n\n\n    *** (CAS) COMPLETE ASSEMBLED SHAFTS - STOCK TABLE ***")
-    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    try:
+        df = pd.DataFrame(mydata, columns=headers)
+        df.to_excel("EXCEL_OUTPUT/CAS-STOCK-TABLE.xlsx", index=False, sheet_name="CAS-STOCK TABLE")
+        print("\n\n\n    *** (CAS) COMPLETE ASSEMBLED SHAFTS - STOCK TABLE ***")
+        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+    except:
+        print("\n\n    *** PLEASE CLOSE THE FILE - CAS-STOCK-TABLE.xlsx - and try again! ***\n\n")
+
 
 def ReadCASLog():
     global List_ItemCode, List_Item, List_Quantity, List_TimeStamp
@@ -751,8 +788,15 @@ def TableCASLog():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "CAS-ENTRY-TIME", "I-CODE", "I-NAME", "QTY."]
-    print("\n\n\n    *** (CAS) COMPLETE ASSEMBLED SHAFTS - LOG TABLE ***")
-    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    try:
+        df = pd.DataFrame(mydata, columns=headers)
+        df.to_excel("EXCEL_OUTPUT/CAS-LOG-TABLE.xlsx", index=False, sheet_name="CAS-LOG TABLE")
+        print("\n\n\n    *** (CAS) COMPLETE ASSEMBLED SHAFTS - LOG TABLE ***")
+        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    except:
+        print("\n\n    *** PLEASE CLOSE THE FILE - CAS-LOG-TABLE.xlsx - and try again! ***\n\n")
+
+
 
 
 def Read_MIN_Entry():
@@ -902,8 +946,15 @@ def TableShowSubAssemblies(temp_input, CAT):
             mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
         headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
-        print(f"\n\n\n    *** {CAT} {temp_input} SUB-ASSEMBLIES TABLE ***")
-        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        try:
+            df = pd.DataFrame(mydata, columns=headers)
+            df.to_excel(f"EXCEL_OUTPUT/{CAT}-{temp_input}-SUB-ASSEMBLIES-TABLE.xlsx", index=False, sheet_name=f"{CAT} {temp_input} SUB-ASSEMBLIES TABLE")
+            print(f"\n\n\n    *** {CAT} {temp_input} SUB-ASSEMBLIES TABLE ***")
+            print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        except:
+            print(f"\n\n    *** PLEASE CLOSE THE FILE - {CAT}-{temp_input}-SUB-ASSEMBLIES-TABLE.xlsx - and try again! ***\n\n")
+
+
 
     #================================= OVER ==============================================================
 
@@ -928,12 +979,20 @@ def TableCASEntry():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "CAS-CODE", "CAS-NAME", "SUB-ASSEMBLIES"]
-    print("\n\n\n    *** REGISTERED ENTRIES TABLE of COMPLETE ASSEMBLED SHAFTS (CAS) ***")
-    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
-    if(len(List_CAS_Entry) != 0):
-        temp_input = input("\n\n    *** ENTER CAS-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
-        GoToMenu(temp_input)
-        TableShowSubAssemblies(temp_input.upper(), "CAS")
+    try:
+        df = pd.DataFrame(mydata, columns=headers)
+        df.to_excel("EXCEL_OUTPUT/REGISTERED-CAS-ENTIRES-TABLE.xlsx", index=False, sheet_name="REGISTERED CAS ENTIRES TABLE")
+        print("\n\n\n    *** REGISTERED ENTRIES TABLE of COMPLETE ASSEMBLED SHAFTS (CAS) ***")
+        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        if (len(List_CAS_Entry) != 0):
+            temp_input = input("\n\n    *** ENTER CAS-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
+            GoToMenu(temp_input)
+            TableShowSubAssemblies(temp_input.upper(), "CAS")
+    except:
+        print("\n\n    *** PLEASE CLOSE THE FILE - REGISTERED-CAS-ENTIRES-TABLE.xlsx - and try again! ***\n\n")
+
+
+
 
 def TableGIE():
     global List_Grouped_Inward_Entry, List_GIE_name, List_GIE_SubAssemblies
@@ -953,13 +1012,21 @@ def TableGIE():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "GIE-CODE", "GIE-NAME", "SUB-ASSEMBLIES"]
-    print("\n\n\n    *** REGISTERED ENTRIES TABLE of GROUPED INWARD ENTRIES (GIE) ***")
-    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    try:
+        df = pd.DataFrame(mydata, columns=headers)
+        df.to_excel("EXCEL_OUTPUT/REGISTERED-GIE-ENTIRES-TABLE.xlsx", index=False, sheet_name="REGISTERED GIE ENTIRES TABLE")
+        print("\n\n\n    *** REGISTERED ENTRIES TABLE of GROUPED INWARD ENTRIES (GIE) ***")
+        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        if (len(List_Grouped_Inward_Entry) != 0):
+            temp_input = input("\n\n    *** ENTER GIE-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
+            GoToMenu(temp_input)
+            TableShowSubAssemblies(temp_input.upper(), "GIE")
+    except:
+        print("\n\n    *** PLEASE CLOSE THE FILE - REGISTERED-GIE-ENTIRES-TABLE.xlsx - and try again! ***\n\n")
 
-    if(len(List_Grouped_Inward_Entry) != 0):
-        temp_input = input("\n\n    *** ENTER GIE-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
-        GoToMenu(temp_input)
-        TableShowSubAssemblies(temp_input.upper(),"GIE")
+
+
+
 
 def TableMIN():
     global List_MIN_iCode_Entry, List_MIN_iName_Entry, List_MIN_iValue_Entry
@@ -979,8 +1046,15 @@ def TableMIN():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "I-CODE", "I-NAME", "MIN QUANTITY"]
-    print("\n\n\n    *** REGISTERED ENTRIES TABLE of MINIMUM QUANTITIES FOR NET-STOCK (MIN) ***")
-    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    try:
+        df = pd.DataFrame(mydata, columns=headers)
+        df.to_excel("EXCEL_OUTPUT/REGISTERED-MIN-QTY-TABLE.xlsx", index=False, sheet_name="REGISTERED MIN QTY TABLE")
+        print("\n\n\n    *** REGISTERED ENTRIES TABLE of MINIMUM QUANTITIES FOR NET-STOCK (MIN) ***")
+        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    except:
+        print("\n\n    *** PLEASE CLOSE THE FILE - REGISTERED-MIN-QTY-TABLE.xlsx - and try again! ***\n\n")
+
+
 
 
 
@@ -1002,8 +1076,15 @@ def TableOutwardStock():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
-    print("\n\n\n    *** OUTWARD-STOCK TABLE ***")
-    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    try:
+        df = pd.DataFrame(mydata, columns=headers)
+        df.to_excel("EXCEL_OUTPUT/OUTWARD-STOCK-TABLE.xlsx", index=False, sheet_name="OUTWARD-STOCK TABLE")
+        print("\n\n\n    *** OUTWARD-STOCK TABLE ***")
+        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+    except:
+        print("\n\n    *** PLEASE CLOSE THE FILE - OUTWARD-STOCK-TABLE.xlsx - and try again! ***\n\n")
+
 
 
 def View(file):
