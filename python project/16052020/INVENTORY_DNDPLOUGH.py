@@ -19,8 +19,12 @@ file_Grouped_Inward_Entry = "GroupedInwardEntry.dnd"
 file_MIN_Entry = "MIN_Entry.dnd"
 file_outward_stock = "OutwardItemStock.dnd"
 
+
+# Feasible then proceed or not
+proceed_flag = 1 # default
+
 #Input
-input_buffer = []
+input_buffer = [] # To store the user inputs during inward, outward, CAS logging.
 destroy_flag = 0
 # Entry Lists
 List_CAS_Entry = []
@@ -484,7 +488,8 @@ def WriteNetStock():
 def SubtractItem(InputList):
 # Subtracts item entered by user for outward from list buffers / net stock. Returns True if outwarding is feasible.
 # Also updates the net stock if feasible.
-    global List_ItemCode,List_Item,List_Quantity
+    global List_ItemCode,List_Item,List_Quantity, proceed_flag
+    proceed_flag = 1
     ReadNetStock()
     # When Item is present in Net Stock
     if InputList[0] in List_ItemCode:
@@ -492,42 +497,55 @@ def SubtractItem(InputList):
             if item == InputList[0]:
                 i = List_ItemCode.index(item)  # Find the index (row) of the item in Buffer Lists.
                 if (( int(List_Quantity[i]) - int(InputList[2]) ) >= 0 ):
+                    question = tmsg.askyesno("Feasible !", f"Current outward operation on {InputList[0]} - {InputList[1]} is feasible.\n\nComplete the current outward operation?")
+                    if not (question):
+                        proceed_flag = 0
+                        return False
                     # Update Quantity List Buffer When Item Already present
                     List_Quantity[i] = int(List_Quantity[i]) - int(InputList[2])
                     WriteNetStock()
                     return True
                 else:
-                    print("\n\n\n    ==========================================================\n"
-                          "    INSUFFICIENT ITEMS IN STOCK. PLEASE PLACE AN INWARD ORDER.\n"
-                          "    ==========================================================\n\n\n")
+                    # print("\n\n\n    ==========================================================\n"
+                    #       "    INSUFFICIENT ITEMS IN STOCK. PLEASE PLACE AN INWARD ORDER.\n"
+                    #       "    ==========================================================\n\n\n")
+                    tmsg.showerror("NOT Feasible !", f"Insufficient items in Inward Stock.\nPlease log {InputList[0]} - {InputList[1]} in Inward Stock.")
                     return False
     else:  # When Item is not present in stock
-        print(f"\n\n\n    =================================================================================\n"
-              f"    {InputList[1]}-{InputList[0]} - NEVER APPEARED IN YOUR INVENTORY.\n"
-              f"    ==================================================================================\n\n\n")
+        # print(f"\n\n\n    =================================================================================\n"
+        #       f"    {InputList[1]}-{InputList[0]} - NEVER APPEARED IN YOUR INVENTORY.\n"
+        #       f"    ==================================================================================\n\n\n")
+        tmsg.showerror("Item not present in stock ",f"{InputList[0]} - {InputList[1]} never appeared in your inventory !")
         return False
 
 def Subtract_CAS_Stock(InputList):
-    global List_ItemCode, List_Item, List_Quantity
+    global List_ItemCode, List_Item, List_Quantity, proceed_flag
+    proceed_flag = 1
     ReadCAS()
     for item in List_ItemCode:  # (Item is surely present in CAS coz then only this fn is called.)
         if item == InputList[0]:
             i = List_ItemCode.index(item)  # Find the index (row) of the item in Buffer Lists.
             if ((int(List_Quantity[i]) - int(InputList[2])) >= 0):
+                question = tmsg.askyesno("Feasible !", f"Current outward operation on CAS item {InputList[0]} - {InputList[1]} is feasible.\n\nComplete the current outward operation?")
+                if not (question):
+                    proceed_flag=0
+                    return False
                 # Update Quantity List Buffer When Item is sufficient to outward.
                 List_Quantity[i] = int(List_Quantity[i]) - int(InputList[2])
                 WriteCAS()
                 return True
             else:
-                print("\n\n\n    ==========================================================\n"
-                        "    INSUFFICIENT ITEMS IN CAS STOCK. PLEASE PLACE CAS ENTRY!\n"
-                        "    ==========================================================\n\n\n")
+                # print("\n\n\n    ==========================================================\n"
+                #         "    INSUFFICIENT ITEMS IN CAS STOCK. PLEASE PLACE CAS ENTRY!\n"
+                #         "    ==========================================================\n\n\n")
+                tmsg.showerror("NOT Feasible !", f"Insufficient items in CAS Stock.\nPlease log {InputList[0]} - {InputList[1]} in CAS Stock.")
                 return False
 
 
 def Subtract_Grouped_Inward_Item(ListOfCASInputs):
     # (Consider CAS word as Grouped Inward Item)
-    global List_ItemCode, List_Item, List_Quantity, List_CAS_Item, List_CAS_ItemCode, List_CAS_Quantity
+    global List_ItemCode, List_Item, List_Quantity, List_CAS_Item, List_CAS_ItemCode, List_CAS_Quantity,proceed_flag
+    proceed_flag = 1
     temp_icode = []
     temp_iname = []
     temp_iquantity = []
@@ -576,14 +594,19 @@ def Subtract_Grouped_Inward_Item(ListOfCASInputs):
 
     # OUTER FOR LOOP ENDS HERE
     if MISSING == 1:
-        print(f"\n\n\n==========================================================================\n"
-              f"INSUFFICIENT SUB-ASSEMBLIES IN NET-STOCK WHILE ENTERING"
-              f" {ListOfCASInputs[1]} - {ListOfCASInputs[0]} IN OUTWARD!\n"
-              f"==========================================================================\n")
+        # print(f"\n\n\n==========================================================================\n"
+        #       f"INSUFFICIENT SUB-ASSEMBLIES IN NET-STOCK WHILE ENTERING"
+        #       f" {ListOfCASInputs[1]} - {ListOfCASInputs[0]} IN OUTWARD!\n"
+        #       f"==========================================================================\n")
+        tmsg.showerror("NOT Feasible !",f"Insufficient SUB-ASSEMBLIES IN NET STOCK for GIE item {ListOfCASInputs[0]} - {ListOfCASInputs[1]} ")
         TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs)
         return False
     # IF CONTROL REACHES HERE
     # MEANS ALL SUB ASSEMBLIES ARE PRESENT AND NET STOCK QUANTITY MUST BE WRITTEN WITH UPDATED LIST BUFFERS.
+    question = tmsg.askyesno("Feasible !",f"Current outward operation on GIE item {ListOfCASInputs[0]} - {ListOfCASInputs[1]} is feasible.\n\nComplete the current outward operation?")
+    if not (question):
+        proceed_flag = 0
+        return False
     WriteNetStock()
     return True
 
@@ -685,7 +708,7 @@ def WriteOutwardItem():
 
 
 def OutwardItem():
-    global input_buffer
+    global input_buffer, proceed_flag
 # Outwards an item if possible and makes outward log and updates net stock file.
     temp1 = input_buffer
     UpdateStatus("Outward item data submitted ...")
@@ -695,31 +718,50 @@ def OutwardItem():
     #===========================================================
     if temp1[0] in List_CAS_Entry: # If input item is present in list of CAS Entry.
         if (Subtract_CAS_Stock(temp1)):
+            UpdateStatus("Outward is Feasible for CAS ...")
             LogOutwardItem(temp1)
             ReadOutwardItem()
             AddItem(temp1)
             WriteOutwardItem()  # Write down the Outward Stock file with updates.
-            UpdateStatus("Outward item logged successfully !    |    Waiting for user to enter an outward item ...")
-            tmsg.showinfo("Successful ! ", f"{temp1[0]} - {temp1[1]} Logged Successfully in the Outward Stock")
+            UpdateStatus("Outward CAS item logged successfully !    |    Waiting for user to enter an outward item ...")
+            tmsg.showinfo("Successful ! ", f" CAS {temp1[0]} - {temp1[1]} Logged Successfully in the Outward Stock")
+        else:
+            if proceed_flag == 0:
+                UpdateStatus(" Feasible outward CAS operation ABORTED !    |    Waiting for user to enter an outward item ...")
+                return
+
+            else:
+                UpdateStatus("Outward is NOT Feasible for CAS ...    |    Waiting for user to enter an outward item ...")
 
     elif temp1[0] in List_Grouped_Inward_Entry: # If input item is present in the list of Grouped Inward Entry.
         if (Subtract_Grouped_Inward_Item(temp1)):
+            UpdateStatus("Outward is Feasible for GIE ...")
             LogOutwardItem(temp1)
             ReadOutwardItem()
             AddItem(temp1)
             WriteOutwardItem()  # Write down the Outward Stock file with updates.
-            UpdateStatus("Outward item logged successfully !    |    Waiting for user to enter an outward item ...")
-            tmsg.showinfo("Successful ! ", f"{temp1[0]} - {temp1[1]} Logged Successfully in the Outward Stock")
-
+            UpdateStatus("Outward GIE item logged successfully !    |    Waiting for user to enter an outward item ...")
+            tmsg.showinfo("Successful ! ", f"GIE {temp1[0]} - {temp1[1]} Logged Successfully in the Outward Stock")
+        else:
+            if proceed_flag == 0:
+                UpdateStatus(" Feasible outward GIE operation ABORTED !    |    Waiting for user to enter an outward item ...")
+                return
+            else:
+                UpdateStatus("Outward is NOT Feasible for GIE ...    |    Waiting for user to enter an outward item ...")
     else:
         if(SubtractItem(temp1)):
+            UpdateStatus("Outward is Feasible for entered simple item ...")
             LogOutwardItem(temp1) # if feasible to outward then only log
             ReadOutwardItem()
             AddItem(temp1)
             WriteOutwardItem()  # Write down the Outward Stock file with updates.
-            UpdateStatus("Outward item logged successfully !    |    Waiting for user to enter an outward item ...")
-            tmsg.showinfo("Successful ! ", f"{temp1[0]} - {temp1[1]} Logged Successfully in the Outward Stock")
-
+            UpdateStatus("Outward simple item logged successfully !    |    Waiting for user to enter an outward item ...")
+            tmsg.showinfo("Successful ! ", f"Item {temp1[0]} - {temp1[1]} Logged Successfully in the Outward Stock")
+        else:
+            if proceed_flag == 0:
+                UpdateStatus("Feasible outward operation ABORTED !    |    Waiting for user to enter an outward item ...")
+                return
+            else: UpdateStatus("Outward is NOT Feasible for entered simple item ...    |    Waiting for user to enter an outward item ...")
     #================================
 
 
@@ -1495,14 +1537,15 @@ def TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs):
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.","I-CODE", "I-NAME", "QTY."]
-    print(f"\n\n\n    *** >>> {ListOfCASInputs[1]} - {ListOfCASInputs[0]} <<< MISSING SUB ASSEMBLIES TABLE ***")
-    print("\n\n", tabulate(mydata, headers=headers), "\n\n")
-
+    # print(f"\n\n\n    *** >>> {ListOfCASInputs[1]} - {ListOfCASInputs[0]} <<< MISSING SUB ASSEMBLIES TABLE ***")
+    # print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+    tmsg.showinfo(f"Missing Sub-Assemblies | Outward operation on {ListOfCASInputs[1]} - {ListOfCASInputs[0]}", f"\n\n{tabulate(mydata, headers=headers)}\n\n" )
 
 
 
 def CAS_Subtract(ListOfCASInputs):
-    global List_ItemCode, List_Item, List_Quantity, List_CAS_Item, List_CAS_ItemCode, List_CAS_Quantity
+    global List_ItemCode, List_Item, List_Quantity, List_CAS_Item, List_CAS_ItemCode, List_CAS_Quantity, proceed_flag
+    proceed_flag = 1
     temp_icode = []
     temp_iname = []
     temp_iquantity = []
@@ -1551,14 +1594,19 @@ def CAS_Subtract(ListOfCASInputs):
 
     # OUTER FOR LOOP ENDS HERE
     if MISSING == 1:
-        print(f"\n\n\n==========================================================================\n"
-              f"INSUFFICIENT SUB-ASSEMBLIES IN NET-STOCK WHILE ENTERING"
-              f" {ListOfCASInputs[1]} - {ListOfCASInputs[0]} IN CAS!\n"
-              f"==========================================================================\n")
+        # print(f"\n\n\n==========================================================================\n"
+        #       f"INSUFFICIENT SUB-ASSEMBLIES IN NET-STOCK WHILE ENTERING"
+        #       f" {ListOfCASInputs[1]} - {ListOfCASInputs[0]} IN CAS!\n"
+        #       f"==========================================================================\n")
+        tmsg.showerror("NOT Feasible !",f"Insufficient SUB-ASSEMBLIES IN NET STOCK for CAS item {ListOfCASInputs[0]} - {ListOfCASInputs[1]} ")
         TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs)
         return False
     # IF CONTROL REACHES HERE
     # MEANS ALL SUB ASSEMBLIES ARE PRESENT AND NET STOCK QUANTITY MUST BE WRITTEN WITH UPDATED LIST BUFFERS.
+    question = tmsg.askyesno("Feasible !",f"Current log operation on CAS item {ListOfCASInputs[0]} - {ListOfCASInputs[1]} is feasible.\n\nComplete the current CAS log operation?")
+    if not (question):
+        proceed_flag = 0
+        return False
     WriteNetStock()
     return True
 
@@ -1612,11 +1660,24 @@ def LogCASItem(ListOfInputs):
     f.write(string)
     f.close()
 
+def Check_Registration_CAS(user_inputs):
+    global List_CAS_Entry, List_CAS_SubAssemblies, List_CAS_Entry_iname
+    Read_CAS_Entry()
+    if (user_inputs[0] in List_CAS_Entry):
+        UpdateStatus("CAS Item is registered ! Proceeding ...")
+        return True
+    else:
+        UpdateStatus("CAS not registered but user is trying to log CAS!    |    Waiting for user to enter a CAS item ...")
+        tmsg.showerror("CAS not registered !", f"CAS {user_inputs[0]} - {user_inputs[1]} is not yet registered.\n\nPlease register and try again.")
+        return False
+
 
 def CAS():
-    global  input_buffer
+    global  input_buffer, proceed_flag
     temp1 = input_buffer
     UpdateStatus("CAS item data submitted ...")
+    if not (Check_Registration_CAS(temp1)):
+        return
 
     if (CAS_Subtract(temp1)): # IF ALL SUBASSEMBLIES ARE SUBTRACTED FROM NETSTOCK - (FEASIBLE)
         LogCASItem(temp1)
@@ -1626,6 +1687,11 @@ def CAS():
         WriteCAS() # WRITE THE UPDATED BUFFERS BACK TO CAS STOCK FILE.
         UpdateStatus("CAS item logged successfully !    |    Waiting for user to enter an CAS item ...")
         tmsg.showinfo("Successful ! ", f"{temp1[0]} - {temp1[1]} Logged Successfully in the CAS Stock")
+    else:
+        if proceed_flag == 0:
+            UpdateStatus(" Feasible inward CAS operation ABORTED !    |    Waiting for user to enter a CAS item ...")
+            return
+        else:UpdateStatus("Logging is NOT Feasible for CAS due to missing sub-assemblies ...    |    Waiting for user to enter a CAS item ...")
 
 def Enter_ENTRY(CAT):
     # Menu to capture CATEGORY (CAS/ GIE) ENTRY details with SUB ASSEMBILIES
@@ -2075,10 +2141,10 @@ l2.pack(fill=X, pady=10)
 b1=Button( f1, text="LOG INWARD ITEM", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterInwardItem)
 b1.pack(fill=X)
 
-b2=Button( f1, text="LOG OUTWARD ITEM", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=OutwardItem)
+b2=Button( f1, text="LOG OUTWARD ITEM", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterOutwardItem)
 b2.pack(fill=X)
 
-b3=Button( f1, text="LOG COMPLETE ASSEMBLED SHAFTS (CAS)", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=CAS)
+b3=Button( f1, text="LOG COMPLETE ASSEMBLED SHAFTS (CAS)", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterCAS)
 b3.pack(fill=X)
 #=====================================================================================
 # View Logs
@@ -2123,7 +2189,7 @@ b11.pack(fill=X)
 b12=Button( f1, text="GROUPED-INWARD-ENTRY (GIE)", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Register_GIE)
 b12.pack(fill=X)
 
-b13=Button( f1, text="MIN QUANTITY", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Register_MIN)
+b13=Button( f1, text="MIN QUANTITY", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_MIN_Entry)
 b13.pack(fill=X)
 #=====================================================================================
 # View Registered Entires
