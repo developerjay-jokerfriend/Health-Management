@@ -211,7 +211,7 @@ def EnterInwardItem():
     idate = StringVar()
     iremarks = StringVar()
 
-    Entry(temp_frame, textvariable = icode,font="TimesNewRoman 12", width="80").grid(row = 0, column = 2, columnspan=3)
+    Entry(temp_frame, textvariable = icode,font="TimesNewRoman 12", width="80").grid(row = 0, column = 2)
     Entry(temp_frame, textvariable = iname,font="TimesNewRoman 12", width="80").grid(row = 1, column = 2)
     Entry(temp_frame, textvariable = iqty,font="TimesNewRoman 12", width="80").grid(row=2, column=2)
     Entry(temp_frame, textvariable = isupplier,font="TimesNewRoman 12", width="80").grid(row=3, column=2)
@@ -426,7 +426,7 @@ def EnterOutwardItem():
     idate = StringVar()
     iremarks = StringVar()
 
-    Entry(temp_frame, textvariable = icode,font="TimesNewRoman 12", width="80").grid(row = 0, column = 2, columnspan=3)
+    Entry(temp_frame, textvariable = icode,font="TimesNewRoman 12", width="80").grid(row = 0, column = 2)
     Entry(temp_frame, textvariable = iname,font="TimesNewRoman 12", width="80").grid(row = 1, column = 2)
     Entry(temp_frame, textvariable = iqty,font="TimesNewRoman 12", width="80").grid(row=2, column=2)
     Entry(temp_frame, textvariable = icustomer,font="TimesNewRoman 12", width="80").grid(row=3, column=2)
@@ -1483,7 +1483,7 @@ def EnterCAS():
     iname = StringVar()
     iqty = StringVar()
 
-    Entry(temp_frame, textvariable=icode, font="TimesNewRoman 12", width="80").grid(row=0, column=2, columnspan=3)
+    Entry(temp_frame, textvariable=icode, font="TimesNewRoman 12", width="80").grid(row=0, column=2)
     Entry(temp_frame, textvariable=iname, font="TimesNewRoman 12", width="80").grid(row=1, column=2)
     Entry(temp_frame, textvariable=iqty, font="TimesNewRoman 12", width="80").grid(row=2, column=2)
 
@@ -1693,46 +1693,179 @@ def CAS():
             return
         else:UpdateStatus("Logging is NOT Feasible for CAS due to missing sub-assemblies ...    |    Waiting for user to enter a CAS item ...")
 
-def Enter_ENTRY(CAT):
-    # Menu to capture CATEGORY (CAS/ GIE) ENTRY details with SUB ASSEMBILIES
-    name=""
-    if CAT == "CAS":
-        name = "COMPLETE ASSEMBLED SHAFTS"
-    if CAT == "GIE":
-        name = "GROUPED INWARD ENTRY"
-    while (True):
-        while (True):
-            while(True):
-                print(f"\n    REGISTER {CAT} - {name} DETAIL : ")
-                i = input(f"    Enter {CAT} Product Code = ")  # PK
-                GoToMenu(i)
-                n = input(f"    Enter {CAT} Product Name = ")
-                GoToMenu(n)
-                q = input(f"    Enter TOTAL NUMBER OF SUB-ASSEMBLIES for {i} = ")
-                GoToMenu(q)
-                # ==========================================
-                if (i != "" and n != ""): break
-                else:
-                    print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
-                # ===========================================
-            try:
-                temp = int(q)
-                break
-            except:
-                print("\n\n\n    ERROR ! PLEASE ENTER QUANTITY IN INTEGERS.\n\n\n")
-                # ===========================================
+def Enter_ENTRY_CAS():
+    # # Menu to capture CATEGORY (CAS/ GIE) ENTRY details with SUB ASSEMBILIES
+    # name=""
+    # if CAT == "CAS":
+    #     name = "COMPLETE ASSEMBLED SHAFTS"
+    # if CAT == "GIE":
+    #     name = "GROUPED INWARD ENTRY"
+    # while (True):
+    #     while (True):
+    #         while(True):
+    #             print(f"\n    REGISTER {CAT} - {name} DETAIL : ")
+    #             i = input(f"    Enter {CAT} Product Code = ")  # PK
+    #             GoToMenu(i)
+    #             n = input(f"    Enter {CAT} Product Name = ")
+    #             GoToMenu(n)
+    #             q = input(f"    Enter TOTAL NUMBER OF SUB-ASSEMBLIES for {i} = ")
+    #             GoToMenu(q)
+    #             # ==========================================
+    #             if (i != "" and n != ""): break
+    #             else:
+    #                 print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
+    #             # ===========================================
+    #         try:
+    #             temp = int(q)
+    #             break
+    #         except:
+    #             print("\n\n\n    ERROR ! PLEASE ENTER QUANTITY IN INTEGERS.\n\n\n")
+    #             # ===========================================
+    #
+    #     i = i.upper()  # MAKE CODE UPPERCASE
+    #     print(f"\n    CONFIRM {CAT} - {name} DETAIL: \n"
+    #           f"    {CAT} PRODUCT CODE : {i}\n"
+    #           f"    {CAT} PRODUCT NAME : {n}\n"
+    #           f"    TOTAL NUMBER OF SUB-ASSEMBLIES : {q}\n"
+    #           )
+    #     confirm = input("    Press 1 to confirm: ")
+    #     GoToMenu(confirm)
+    #     if confirm == "1": break
+    #     #=====================================================================
+    # return [i,n,q]
 
-        i = i.upper()  # MAKE CODE UPPERCASE
-        print(f"\n    CONFIRM {CAT} - {name} DETAIL: \n"
-              f"    {CAT} PRODUCT CODE : {i}\n"
-              f"    {CAT} PRODUCT NAME : {n}\n"
-              f"    TOTAL NUMBER OF SUB-ASSEMBLIES : {q}\n"
-              )
-        confirm = input("    Press 1 to confirm: ")
-        GoToMenu(confirm)
-        if confirm == "1": break
-        #=====================================================================
-    return [i,n,q]
+    global f2, input_buffer, temp_frame
+
+    UpdateHead("Register Complete Assembled Shafts (CAS) Product")
+    UpdateStatus("Waiting for user to register CAS product ...")
+
+    # =============================================================================================
+    def GET_VAL():
+        global input_buffer
+        input_buffer = []
+        if (icode.get() == "" or iname.get() == "" or iqty.get() == ""):
+            tmsg.showerror("Input Cannot be Empty", "Please fill up all the input fields with relevant data!")
+            return
+
+        try:
+
+            q = int(iqty.get())
+
+        except:
+            tmsg.showerror("Incorrect Input", " Please enter quantity in integer value only!")
+            return
+
+        # Checks finish
+        # Fetch values
+        i = icode.get()
+        i = i.upper()
+        n = iname.get()
+        q = str(q)
+
+        # Confirm
+        confirm = tmsg.askokcancel("Confirm", f"\n    CAS PRODUCT DETAILS:\n\n"
+                                              f"    CAS PRODUCT CODE : {i}\n"
+                                              f"    CAS PRODUCT NAME : {n}\n"
+                                              f"    TOTAL NO. OF SUB-ASSEMBLIES : {q}\n"
+                                              f"\n Click OK to CONFIRM ! ")
+        if not (confirm): return
+        # write into global input buffer
+        for x in (i, n, q):  # dont change the list item index order here.
+            input_buffer.append(x)
+
+        Register_CAS()  # Input found successfully , Continue the main execution ...
+
+    # =============================================================================
+    # Destroy the existing frame and create new frame
+    temp_frame.destroy()
+    temp_frame = Frame(f2, pady=100)
+    temp_frame.pack()
+
+    # Label Headings
+    Label(temp_frame, text="CAS Product Code", font="TimesNewRoman 12").grid(row=0, column=0)
+    Label(temp_frame, text="CAS Product Name", font="TimesNewRoman 12").grid(row=1, column=0)
+    Label(temp_frame, text="Total No. of Sub-Assemblies", font="TimesNewRoman 12").grid(row=2, column=0)
+
+    for dot in range(3):
+        Label(temp_frame, text=":", font="TimesNewRoman 12").grid(row=dot, column=1)
+
+    # Variables Defined
+    icode = StringVar()
+    iname = StringVar()
+    iqty = StringVar()
+
+    Entry(temp_frame, textvariable=icode, font="TimesNewRoman 12", width="50").grid(row=0, column=2)
+    Entry(temp_frame, textvariable=iname, font="TimesNewRoman 12", width="50").grid(row=1, column=2)
+    Entry(temp_frame, textvariable=iqty, font="TimesNewRoman 12", width="50").grid(row=2, column=2)
+
+    Button(temp_frame, text="Submit", font="TimesNewRoman 12", width="50", command=GET_VAL).grid(row=7, column=2)
+
+def Enter_ENTRY_GIE():
+    global f2, input_buffer, temp_frame
+
+    UpdateHead("Register Grouped Inward Entry (GIE) Item")
+    UpdateStatus("Waiting for user to register GIE ...")
+
+    # =============================================================================================
+    def GET_VAL():
+        global input_buffer
+        input_buffer = []
+        if (icode.get() == "" or iname.get() == "" or iqty.get() == ""):
+            tmsg.showerror("Input Cannot be Empty", "Please fill up all the input fields with relevant data!")
+            return
+
+        try:
+
+            q = int(iqty.get())
+
+        except:
+            tmsg.showerror("Incorrect Input", " Please enter quantity in integer value only!")
+            return
+
+        # Checks finish
+        # Fetch values
+        i = icode.get()
+        i = i.upper()
+        n = iname.get()
+        q = str(q)
+
+        # Confirm
+        confirm = tmsg.askokcancel("Confirm", f"\n   GIE DETAILS:\n\n"
+                                              f"    GIE CODE : {i}\n"
+                                              f"    GIE NAME : {n}\n"
+                                              f"    TOTAL NO. OF SUB-ASSEMBLIES : {q}\n"
+                                              f"\n Click OK to CONFIRM ! ")
+        if not (confirm): return
+        # write into global input buffer
+        for x in (i, n, q):  # dont change the list item index order here.
+            input_buffer.append(x)
+
+        Register_GIE()  # Input found successfully , Continue the main execution ...
+
+    # =============================================================================
+    # Destroy the existing frame and create new frame
+    temp_frame.destroy()
+    temp_frame = Frame(f2, pady=100)
+    temp_frame.pack()
+
+    # Label Headings
+    Label(temp_frame, text="GIE Code", font="TimesNewRoman 12").grid(row=0, column=0)
+    Label(temp_frame, text="GIE Name", font="TimesNewRoman 12").grid(row=1, column=0)
+    Label(temp_frame, text="Total No. of Sub-Assemblies", font="TimesNewRoman 12").grid(row=2, column=0)
+
+    for dot in range(3):
+        Label(temp_frame, text=":", font="TimesNewRoman 12").grid(row=dot, column=1)
+
+    # Variables Defined
+    icode = StringVar()
+    iname = StringVar()
+    iqty = StringVar()
+
+    Entry(temp_frame, textvariable=icode, font="TimesNewRoman 12", width="80").grid(row=0, column=2)
+    Entry(temp_frame, textvariable=iname, font="TimesNewRoman 12", width="80").grid(row=1, column=2)
+    Entry(temp_frame, textvariable=iqty, font="TimesNewRoman 12", width="80").grid(row=2, column=2)
+
+    Button(temp_frame, text="Submit", font="TimesNewRoman 12", width="80", command=GET_VAL).grid(row=7, column=2)
 
 def Write_Entry(data, filename, CAT):
     global  List_CAS_Entry, List_Grouped_Inward_Entry, List_MIN_iCode_Entry, List_MIN_iName_Entry, List_MIN_iValue_Entry, List_CAS_SubAssemblies, List_CAS_Entry_iname, List_GIE_SubAssemblies, List_GIE_name
@@ -1742,10 +1875,12 @@ def Write_Entry(data, filename, CAT):
         for item1 in List_CAS_Entry:
             if (item1 == data[0]):
 
-                print(f"\n\nALERT: CAS {data[0]} - {data[1]} Already Registered!")
-                replace = input(f"Enter 1 - To Replace Existing CAS {data[0]} - {data[1]} Definition : ")
-                GoToMenu(replace)
-                if replace == "1":
+                # print(f"\n\nALERT: CAS {data[0]} - {data[1]} Already Registered!")
+                # replace = input(f"Enter 1 - To Replace Existing CAS {data[0]} - {data[1]} Definition : ")
+                # GoToMenu(replace)
+                ques = tmsg.askyesno("Already Registered !",f"CAS : {data[0]} - {data[1]} is already registered !\n\nDo you want to replace?")
+                if ques:
+                    UpdateStatus("Replacing existing CAS Entry details...")
                     flg = 1
                     # Write
                     i1=List_CAS_Entry.index(item1) # get index
@@ -1759,7 +1894,9 @@ def Write_Entry(data, filename, CAT):
                     f.write(s)
                     f.close()
                     return 1
-                else: return 0
+                else:
+                    UpdateStatus("CAS Registration - Replacement ABORTED !    |    Waiting for the user to register CAS ...")
+                    return 0
 
 
 
@@ -1767,10 +1904,12 @@ def Write_Entry(data, filename, CAT):
         Read_Grouped_Inward_Entry()
         for item1 in List_Grouped_Inward_Entry:
             if (item1 == data[0]):
-                print(f"\n\nALERT: GIE {data[0]} - {data[1]} Already Registered!")
-                replace = input(f"Enter 1 - To Replace Existing GIE {data[0]} - {data[1]} Definition : ")
-                GoToMenu(replace)
-                if replace == "1":
+                # print(f"\n\nALERT: GIE {data[0]} - {data[1]} Already Registered!")
+                # replace = input(f"Enter 1 - To Replace Existing GIE {data[0]} - {data[1]} Definition : ")
+                ques = tmsg.askyesno("Already Registered !", f"GIE : {data[0]} - {data[1]} is already registered !\n\nDo you want to replace?")
+                #GoToMenu(replace)
+                if ques:
+                    UpdateStatus("Replacing existing GIE entry details ...")
                     flg = 1
                     # Write
                     i1 = List_Grouped_Inward_Entry.index(item1)  # get index
@@ -1784,17 +1923,22 @@ def Write_Entry(data, filename, CAT):
                     f.write(s)
                     f.close()
                     return 1
-                else: return 0
+                else:
+                    UpdateStatus("GIE Registration - Replacement ABORTED !    |    Waiting for the user to register GIE ...")
+                    return 0
 
     else:
         if(CAT == "MIN"):
             Read_MIN_Entry()
             for item1 in List_MIN_iCode_Entry:
                 if (item1 == data[0]):
-                    print(f"\n\nALERT: MIN | {data[0]} - {data[1]} Already Registered!")
-                    replace = input(f"Enter 1 - To Replace Existing MIN | {data[0]} - {data[1]} Definition : ")
-                    GoToMenu(replace)
-                    if replace == "1":
+                    #print(f"\n\nALERT: MIN | {data[0]} - {data[1]} Already Registered!")
+                    ques=tmsg.askyesno("Already Registered !", f"Minimum QTY of {data[0]} - {data[1]} is already registered !\n\nDo you want to replace?")
+
+                    #replace = input(f"Enter 1 - To Replace Existing MIN | {data[0]} - {data[1]} Definition : ")
+                    #GoToMenu(replace)
+                    if ques:
+                        UpdateStatus("Replacing existing MIN Registered QTY ...")
                         flg = 1
                         # Write
                         i1 = List_MIN_iCode_Entry.index(item1)  # get index
@@ -1808,10 +1952,12 @@ def Write_Entry(data, filename, CAT):
                         f.write(s)
                         f.close()
                         return 1
-                    else: return 0
+                    else:
+                        UpdateStatus("MIN QTY Registration - Replacement ABORTED !    |    Waiting for the user to register MIN QTY ...")
+                        return 0
 
         else:
-            print("ERROR: CATEGORY CAS/GIE/MIN DIDNT MATCH ANY IN WRITE_ENTRY()")
+            UpdateStatus("ERROR: CATEGORY CAS/GIE/MIN DIDNT MATCH ANY IN WRITE_ENTRY()")
             return 0
 
 
@@ -1824,53 +1970,130 @@ def Write_Entry(data, filename, CAT):
 
 
 def Enter_SubAssemblies(data):
-    global List_ItemCode, List_Item, List_Quantity
-    # Clear Buffers
+    # global List_ItemCode, List_Item, List_Quantity
+    # # Clear Buffers
+    # List_Item = []
+    # List_Quantity = []
+    # List_ItemCode = []
+    # p= 1
+    # while(p <= int(data[2])):
+    #     while (True):
+    #         while (True):
+    #             while (True):
+    #                 print(f"\n    ===== SUB-ASSEMBLY NO - {p} of {data[2]} for {data[0]}-{data[1]} =====")
+    #                 i = input("    ENTER ITEM CODE = ")  # PK
+    #                 GoToMenu(i)
+    #                 n = input("    ENTER ITEM NAME = ")
+    #                 GoToMenu(n)
+    #                 q = input(f"    ENTER ITEM QUANTITY = ")
+    #                 GoToMenu(q)
+    #                 # ==========================================
+    #                 if (i != "" and n != ""):
+    #                     break
+    #                 else:
+    #                     print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
+    #                 # ===========================================
+    #             try:
+    #                 temp = int(q)
+    #                 break
+    #             except:
+    #                 print("\n\n\n    ERROR ! PLEASE ENTER QUANTITY IN INTEGERS.\n\n\n")
+    #                 # ===========================================
+    #
+    #         i = i.upper()  # MAKE CODE UPPERCASE
+    #
+    #         print(f"\n    ===== SUB-ASSEMBLY NO - {p} of {data[2]} for {data[0]}-{data[1]} =====\n"
+    #               f"    ITEM CODE : {i}\n"
+    #               f"    ITEM NAME : {n}\n"
+    #               f"    ITEM QUANTITY : {q}\n"
+    #               )
+    #         confirm = input("    Press 1 to confirm: ")
+    #         if confirm == "1": break
+    #         GoToMenu(confirm)
+    #
+    #
+    #     List_ItemCode.append(i)
+    #     List_Item.append(n)
+    #     List_Quantity.append(q)
+    #     p=p+1
+    #
+    global f2, temp_frame, List_Item, List_ItemCode, List_Quantity
+    # Clear buffers
     List_Item = []
     List_Quantity = []
     List_ItemCode = []
-    p= 1
-    while(p <= int(data[2])):
-        while (True):
-            while (True):
-                while (True):
-                    print(f"\n    ===== SUB-ASSEMBLY NO - {p} of {data[2]} for {data[0]}-{data[1]} =====")
-                    i = input("    ENTER ITEM CODE = ")  # PK
-                    GoToMenu(i)
-                    n = input("    ENTER ITEM NAME = ")
-                    GoToMenu(n)
-                    q = input(f"    ENTER ITEM QUANTITY = ")
-                    GoToMenu(q)
-                    # ==========================================
-                    if (i != "" and n != ""):
-                        break
-                    else:
-                        print("\n\n\n    ERROR: Item Code and Item Name should not be blank! \n\n\n")
-                    # ===========================================
-                try:
-                    temp = int(q)
-                    break
-                except:
-                    print("\n\n\n    ERROR ! PLEASE ENTER QUANTITY IN INTEGERS.\n\n\n")
-                    # ===========================================
+    UpdateHead(f"Enter Sub-Assemblies of {data[0]} - {data[1]}")
+    # =============================================================================================
+    def GET_VAL():
+        global List_Item, List_ItemCode, List_Quantity,input_buffer
+        for a,b,c in zip(List_ItemCode,List_Item,List_Quantity):
+            if (a.get()=="" or b.get()=="" or c.get() == ""):
+                tmsg.showerror("Input Cannot be Empty", "Please fill up all the input fields with relevant data!")
+                return
+            try:
+                int(c.get())
+            except:
+                tmsg.showerror("Incorrect Input", " Please enter quantity in integer value only!")
+                return
 
-            i = i.upper()  # MAKE CODE UPPERCASE
+        # Checks finish if Control reaches here
 
-            print(f"\n    ===== SUB-ASSEMBLY NO - {p} of {data[2]} for {data[0]}-{data[1]} =====\n"
-                  f"    ITEM CODE : {i}\n"
-                  f"    ITEM NAME : {n}\n"
-                  f"    ITEM QUANTITY : {q}\n"
-                  )
-            confirm = input("    Press 1 to confirm: ")
-            if confirm == "1": break
-            GoToMenu(confirm)
-        List_ItemCode.append(i)
-        List_Item.append(n)
-        List_Quantity.append(q)
-        p=p+1
+        confirm = tmsg.askyesno("Confirm",f" Are you sure you want to FINALLY SUBMIT?\nClick Yes to confirm and finally submit.")
+        if not (confirm): return
+
+        # Control reaches here means confirmed.
+        # Append the global buffer Lists with the all the sub-assemblies data.
+        for d,e,f,g in zip(List_ItemCode, List_Item, List_Quantity,range(int(input_buffer[2]))):
+            temp = d.get()
+            List_ItemCode[g] = temp.upper()
+            List_Item[g] = e.get()
+            List_Quantity[g] = f.get()
+        # Entering sub-assemblies finishes and now write it.
+        Write_SubAssemblies(input_buffer)
+
+    # =============================================================================
+    # Destroy the existing frame and create new frame
+    temp_frame.destroy()
+    temp_frame = Frame(f2, pady=100)
+    temp_frame.pack()
+    k = 0
+    # Label Headings
+    for p in range(int(data[2])):
+
+        Label(temp_frame, text=f"({(p+1)})", font="TimesNewRoman 12").grid(row=k, column=0)
+
+        Label(temp_frame, text="Sub-Assembly Item Code", font="TimesNewRoman 12").grid(row=k, column=1)
+        Label(temp_frame, text="Sub-Assembly Item Name", font="TimesNewRoman 12").grid(row=k+1, column=1)
+        Label(temp_frame, text="Sub-Assembly Quantity", font="TimesNewRoman 12").grid(row=k+2, column=1)
+        Label(temp_frame, text=" ", font="TimesNewRoman 12").grid(row=k+3, column=1)
+
+        Label(temp_frame, text=":", font="TimesNewRoman 12").grid(row=k, column=2)
+        Label(temp_frame, text=":", font="TimesNewRoman 12").grid(row=k+1, column=2)
+        Label(temp_frame, text=":", font="TimesNewRoman 12").grid(row=k+2, column=2)
+        Label(temp_frame, text=" ", font="TimesNewRoman 12").grid(row=k + 3, column=2)
+
+
+        e1 = Entry(temp_frame, font="TimesNewRoman 12", width="80")
+        e1.grid(row=k, column=3)
+        List_ItemCode.append(e1)
+
+        e2 = Entry(temp_frame, font="TimesNewRoman 12", width="80")
+        e2.grid(row=k+1, column=3)
+        List_Item.append(e2)
+
+        e3 = Entry(temp_frame, font="TimesNewRoman 12", width="80")
+        e3.grid(row=k+2, column=3)
+        List_Quantity.append(e3)
+
+        Label(temp_frame, text=" ", font="TimesNewRoman 12").grid(row=k + 3, column=3)
+        k=k+4
+
+    Button(temp_frame, text="Submit", font="TimesNewRoman 12", width="80", command=GET_VAL).grid(row=((4*int(data[2]))+1), column=3)
+
+
 
 def Write_SubAssemblies(data):
-    global List_ItemCode, List_Item, List_Quantity
+    global List_ItemCode, List_Item, List_Quantity, temp_frame
     CreateFileIfNotExist(f"{data[0]}.dnd")
     f = open(f"{data[0]}.dnd", "w")
     i = 0
@@ -1880,26 +2103,36 @@ def Write_SubAssemblies(data):
         i = i + 1
     f.write(s)
     f.close()
-    print(f"\n\n    SUCCESSFUL REGISTRATION OF {data[0]} - {data[1]} WITH {data[2]} SUB-ASSEMBLIES !\n\n")
+    UpdateStatus(f"SUCCESSFUL REGISTRATION OF {data[0]} - {data[1]} WITH {data[2]} SUB-ASSEMBLIES !")
+    temp_frame.destroy()
+    temp_frame = Frame(f2, pady=100)
+    temp_frame.pack()
+    UpdateHead(" ")
+    tmsg.showinfo("Successful",f"SUCCESSFUL REGISTRATION OF {data[0]} - {data[1]} WITH {data[2]} SUB-ASSEMBLIES !")
+
 
 
 
 
 def Register_CAS():
-    global file_CAS_Entry
-    temp1= Enter_ENTRY("CAS")
+    global file_CAS_Entry, input_buffer
+    temp1= input_buffer #Enter_ENTRY("CAS")
+    UpdateStatus("CAS registration data submitted ...")
     o = Write_Entry(temp1, file_CAS_Entry, "CAS")
     if o == 1:
+        UpdateStatus(f"Waiting for user to finish entering Sub - Assemblies of CAS {temp1[0]} - {temp1[1]}")
         Enter_SubAssemblies(temp1)
-        Write_SubAssemblies(temp1)
+        #Write_SubAssemblies(temp1)
 
 def Register_GIE():
-    global file_Grouped_Inward_Entry
-    temp1= Enter_ENTRY("GIE")
+    global file_Grouped_Inward_Entry, input_buffer
+    temp1= input_buffer #Enter_ENTRY("GIE")
+    UpdateStatus("GIE registration data submitted ...")
     o =Write_Entry(temp1, file_Grouped_Inward_Entry, "GIE")
     if o == 1:
+        UpdateStatus(f"Waiting for user to finish entering Sub - Assemblies of CAS {temp1[0]} - {temp1[1]}")
         Enter_SubAssemblies(temp1)
-        Write_SubAssemblies(temp1)
+        #Write_SubAssemblies(temp1)
 
 def Enter_MIN_Entry():
     # while (True):
@@ -1938,7 +2171,7 @@ def Enter_MIN_Entry():
     global f2, input_buffer, temp_frame
 
     UpdateHead("Register Minimum Quantity of an Item for Net Stock")
-    UpdateStatus("Waiting for user to enter MIN QTY item details ...")
+    UpdateStatus("Waiting for user to register MIN QTY item details ...")
 
     # =============================================================================================
     def GET_VAL():
@@ -1995,7 +2228,7 @@ def Enter_MIN_Entry():
     iname = StringVar()
     iqty = StringVar()
 
-    Entry(temp_frame, textvariable=icode, font="TimesNewRoman 12", width="80").grid(row=0, column=2, columnspan=3)
+    Entry(temp_frame, textvariable=icode, font="TimesNewRoman 12", width="80").grid(row=0, column=2)
     Entry(temp_frame, textvariable=iname, font="TimesNewRoman 12", width="80").grid(row=1, column=2)
     Entry(temp_frame, textvariable=iqty, font="TimesNewRoman 12", width="80").grid(row=2, column=2)
 
@@ -2007,8 +2240,9 @@ def Register_MIN():
     temp1= input_buffer
     UpdateStatus("MIN quantity data submitted ...")
     o = Write_Entry(temp1, file_MIN_Entry, "MIN")
-    UpdateStatus("MIN quantity registered successfully !    |    Waiting for user to enter MIN quantity of an item ...")
-    tmsg.showinfo("Successful ! ", f"MIN QTY of {temp1[0]} - {temp1[1]} Registered Successfully !")
+    if o == 1:
+        UpdateStatus("MIN quantity registered successfully !    |    Waiting for user to enter MIN quantity of an item ...")
+        tmsg.showinfo("Successful ! ", f"MIN QTY of {temp1[0]} - {temp1[1]} Registered Successfully !")
 
 #========================================================================================================
 #MENU
@@ -2183,10 +2417,10 @@ b10.pack(fill=X)
 l5=Label(f1,text="REGISTER", font="Helvetica 8 bold",bg="#120136", fg="#40bad5")
 l5.pack(fill=X,pady=10)
 
-b11=Button( f1, text="CAS", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Register_CAS)
+b11=Button( f1, text="CAS", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_ENTRY_CAS)
 b11.pack(fill=X)
 
-b12=Button( f1, text="GROUPED-INWARD-ENTRY (GIE)", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Register_GIE)
+b12=Button( f1, text="GROUPED-INWARD-ENTRY (GIE)", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_ENTRY_GIE)
 b12.pack(fill=X)
 
 b13=Button( f1, text="MIN QUANTITY", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_MIN_Entry)
