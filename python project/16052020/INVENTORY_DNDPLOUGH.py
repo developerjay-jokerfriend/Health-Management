@@ -2,6 +2,7 @@ from tkinter import *
 import pandas as pd
 from tabulate import tabulate
 import  tkinter.messagebox as tmsg
+import os
 
 def fun1(): pass
 
@@ -25,7 +26,8 @@ proceed_flag = 1 # default
 
 #Input
 input_buffer = [] # To store the user inputs during inward, outward, CAS logging.
-destroy_flag = 0
+destroy_flag = 0 # defualt = w2 paned window is NOT destroyed and hence needs no reconstruction.
+
 # Entry Lists
 List_CAS_Entry = []
 List_CAS_Entry_iname = []
@@ -61,28 +63,60 @@ List_CAS_ItemCode = []
 List_CAS_Item =  []
 List_CAS_Quantity = []
 
+def OpenExcelFile(file):
+    try:
+        os.startfile(f"EXCEL_OUTPUT\{file}.xlsx")
+    except Exception as e:
+        tmsg.showerror("Error",e)
+
+
+
+def Reconstruct_Destruction():
+    # Fn called when w2 is destroyed and needs reconstruction.
+    # w2 contains w1,f2,Head.
+    global temp_frame,w1,w2,f2,Head,headingtext, destroy_flag
+    if destroy_flag == 1:
+        temp_frame.destroy() # w1 ni ander ni temp frame destroyed.
+        # Recreate w2 ,f2, Head, headingtext and temp frame and update Head.
+        w2 = PanedWindow(w1, orient=VERTICAL)
+        w1.add(w2)
+        # ======================== Inside W2 paned window =================================
+        headingtext = StringVar()
+        headingtext.set("")
+        Head = Label(w2, textvariable=headingtext, relief=RIDGE, font="Georgia 14 bold")
+        w2.add(Head)
+
+        f2 = Frame(w2, borderwidth=6, relief=RIDGE)
+        w2.add(f2)
+
+        temp_frame = Frame(f2, pady=100)
+        temp_frame.pack()
+        destroy_flag = 0
+
+
+
 def UpdateBody(string):
     global f2
     bodytext = StringVar()
     bodytext.set("")
     Body = Label(f2, textvariable=bodytext)
     Body.pack(fill=BOTH)
-    import time
-    time.sleep(1)
+    #import time
+    #time.sleep(0.01)
     bodytext.set(string)
     Body.update()
 
 def UpdateHead(string):
     global headingtext, Head
-    import time
-    time.sleep(1)
+    #import time
+    #time.sleep(0.01)
     headingtext.set(string)
     Head.update()
 
 def UpdateStatus(string):
     global Status, statustext
-    import time
-    time.sleep(1)
+    #import time
+    #time.sleep(0.01)
     statustext.set(f"Status - {string}")
     Status.update()
 
@@ -94,6 +128,7 @@ def CreateFileIfNotExist(file):
     f.close()
 
 def EnterInwardItem():
+    Reconstruct_Destruction()
 # Menu to capture Inward Item details
 #     while (True):
 #         while (True):
@@ -138,7 +173,7 @@ def EnterInwardItem():
 #     return [i, n, q, d, ds, sn, dn ]  # dont change the list item index order here.
 
     global f2 ,input_buffer, temp_frame
-
+    Reconstruct_Destruction()
     UpdateHead("Log Inward Item")
     UpdateStatus("Waiting for user to enter an inward item ...")
     #=============================================================================================
@@ -309,6 +344,7 @@ def InwardItem():
 #========================================================================================================
 
 def EnterOutwardItem():
+    Reconstruct_Destruction()
 # # Menu to capture OUTWARD FILE DETAILS
 #     while(True):
 #         while(True):
@@ -841,7 +877,8 @@ def ReadOutwardLog():
 
 
 def TableOutwardLog():
-    global List_TimeStamp, List_ItemCode, List_Item, List_Quantity, List_Date, List_Remarks, List_Customer, List_Document
+    Reconstruct_Destruction()
+    global List_TimeStamp, List_ItemCode, List_Item, List_Quantity, List_Date, List_Remarks, List_Customer, List_Document, temp_frame,w1,w2,destroy_flag
 
     mydata = []
     n = 1  # For Serial No.
@@ -863,20 +900,71 @@ def TableOutwardLog():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "OUTWARD-ENTRY-TIME", "I-CODE", "I-NAME", "QTY.","CUSTOMER", "DOC NO.", "OUTWARD-DATE", "REMARKS"]
+
+    # =============================================================================
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy()  # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
+
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+
+    h = Label(temp_frame, text=f"OUTWARD-LOG TABLE", font="Georgia 14 bold", relief=RIDGE, bd=2)
+    h.pack(fill=X, side=TOP, anchor="nw")
+    Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile("OUTWARD-LOG-TABLE"), bg="#484848",fg="#D0D0D0").pack(fill=X, pady=2, side=TOP)
+    UpdateStatus("Viewing Outward Log Table ...")
+    # ===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame, highlightthickness=0)
+    f3 = Frame(canvas, padx=50, pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set)
+
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=True)
+
+    canvas.create_window((4, 4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+    # =================================================================================
+
     try:
         df = pd.DataFrame(mydata, columns=headers)
         df.to_excel("EXCEL_OUTPUT/OUTWARD-LOG-TABLE.xlsx", index=False, sheet_name="OUTWARD-LOG TABLE")
-        print("\n\n\n    *** OUTWARD-LOG TABLE ***")
-        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
-    except:
-        print("\n\n    *** PLEASE CLOSE THE FILE - OUTWARD-LOG-TABLE.xlsx - and try again! ***\n\n")
+        #print("\n\n\n    *** OUTWARD-LOG TABLE ***")
+        #print("\n\n", tabulate(mydata, headers=headers), "\n\n")
 
+        # =================Tkinter Table============================================================
+        rows = len(mydata)
+        columns = len(headers)
+
+        # Populate Headers
+        for x in range(len(headers)):
+            Label(f3, text=headers[x], padx=3, pady=3, font="Georgia 11").grid(row=0, column=x)
+
+        # Populate Table data
+        for ro in range(rows):
+            for col in range(columns):
+                Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
+
+    except:
+        #print("\n\n    *** PLEASE CLOSE THE FILE - OUTWARD-LOG-TABLE.xlsx - and try again! ***\n\n")
+        UpdateStatus("Close the excel file to view the outward log table !")
+        tmsg.showerror("Close the file", "CLOSE THE FILE - OUTWARD-LOG-TABLE.xlsx - and try again!")
 
 
 
 
 def TableInwardLog():
-    global List_TimeStamp, List_ItemCode, List_Item, List_Quantity, List_Date, List_Remarks, List_Supplier, List_Document
+    Reconstruct_Destruction()
+    global List_TimeStamp, List_ItemCode, List_Item, List_Quantity, List_Date, List_Remarks, List_Supplier, List_Document, temp_frame,w1,w2,destroy_flag
 
     mydata = []
     n = 1  # For Serial No.
@@ -898,18 +986,68 @@ def TableInwardLog():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "INWARD-ENTRY-TIME", "I-CODE", "I-NAME", "QTY.","SUPPLIER", "DOC NO.", "INWARD-DATE", "REMARKS"]
+
+    # =============================================================================
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy()  # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
+
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+
+    h = Label(temp_frame, text=f"INWARD-LOG TABLE", font="Georgia 14 bold", relief=RIDGE, bd=2)
+    h.pack(fill=X, side=TOP, anchor="nw")
+    Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile("INWARD-LOG-TABLE"),bg="#484848",fg="#D0D0D0").pack(fill=X,pady=2,side=TOP)
+    UpdateStatus("Viewing Inward Log Table ...")
+    # ===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame, highlightthickness=0)
+    f3 = Frame(canvas, padx=50,pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set )
+
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=True)
+
+    canvas.create_window((4, 4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+    # =================================================================================
+
     try:
         df = pd.DataFrame(mydata, columns=headers)
         df.to_excel("EXCEL_OUTPUT/INWARD-LOG-TABLE.xlsx", index=False, sheet_name="INWARD-LOG TABLE")
-        print("\n\n\n    *** INWARD-LOG TABLE ***")
-        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+        #print("\n\n\n    *** INWARD-LOG TABLE ***")
+        #print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+        #=================Tkinter Table============================================================
+        rows = len(mydata)
+        columns = len(headers)
+
+        # Populate Headers
+        for x in range(len(headers)):
+            Label(f3,text=headers[x],padx=3,pady=3, font="Georgia 11").grid(row=0, column=x)
+
+        # Populate Table data
+        for ro in range(rows):
+            for col in range(columns):
+                Label(f3,text=mydata[ro][col],padx=5,pady=5).grid(row=ro+1, column=col)
+
     except:
-        print("\n\n    *** PLEASE CLOSE THE FILE - INWARD-LOG-TABLE.xlsx - and try again! ***\n\n")
-
-
+        UpdateStatus("Close the excel file to view the inward log table !")
+        tmsg.showerror("Close the file","CLOSE THE FILE - INWARD-LOG-TABLE.xlsx - and try again!")
 
 def TableNetStock():
-    global List_ItemCode, List_Item, List_Quantity, List_NetStock_Min, List_NetStock_Alert
+    Reconstruct_Destruction()
+    global List_ItemCode, List_Item, List_Quantity, List_NetStock_Min, List_NetStock_Alert, temp_frame,w1,w2,destroy_flag
 
     mydata = []
     n = 1  # For Serial No.
@@ -928,18 +1066,69 @@ def TableNetStock():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.","I-CODE", "I-NAME", "QTY.", "MIN", "ALERT"]
+
+
+    # =============================================================================
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy()  # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
+
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+
+    h = Label(temp_frame, text=f"NET-STOCK TABLE", font="Georgia 14 bold", relief=RIDGE, bd=2)
+    h.pack(fill=X, side=TOP, anchor="nw")
+    Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile("NET-STOCK-TABLE"),bg="#484848",fg="#D0D0D0").pack(fill=X,pady=2,side=TOP)
+    UpdateStatus("Viewing Net Stock Table ...")
+    # ===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame, highlightthickness=0)
+    f3 = Frame(canvas, padx=50,pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set )
+
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=True)
+
+    canvas.create_window((4, 4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+    # =================================================================================
+
+
     try:
         df = pd.DataFrame(mydata, columns=headers)
         df.to_excel("EXCEL_OUTPUT/NET-STOCK-TABLE.xlsx", index=False, sheet_name="NET-STOCK TABLE")
-        print("\n\n\n    *** NET-STOCK TABLE ***")
-        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        #print("\n\n\n    *** NET-STOCK TABLE ***")
+        #print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        # =================Tkinter Table============================================================
+        rows = len(mydata)
+        columns = len(headers)
+
+        # Populate Headers
+        for x in range(len(headers)):
+            Label(f3, text=headers[x], padx=3, pady=3, font="Georgia 11").grid(row=0, column=x)
+
+        # Populate Table data
+        for ro in range(rows):
+            for col in range(columns):
+                Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
+
     except:
-        print("\n\n    *** PLEASE CLOSE THE FILE - NET-STOCK-TABLE.xlsx - and try again! ***\n\n")
-
-
+        #print("\n\n    *** PLEASE CLOSE THE FILE - NET-STOCK-TABLE.xlsx - and try again! ***\n\n")
+        UpdateStatus("Close the excel file to view the net stock table !")
+        tmsg.showerror("Close the file", "CLOSE THE FILE - NET-STOCK-TABLE.xlsx - and try again!")
 
 def TableInwardStock():
-    global  List_ItemCode, List_Item, List_Quantity
+    Reconstruct_Destruction()
+    global  List_ItemCode, List_Item, List_Quantity, temp_frame,w1,w2,destroy_flag
 
     mydata = []
     n = 1  # For Serial No.
@@ -956,18 +1145,65 @@ def TableInwardStock():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
+
+    # =============================================================================
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy()  # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
+
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+
+    h = Label(temp_frame, text=f"INWARD-STOCK TABLE", font="Georgia 14 bold", relief=RIDGE, bd=2)
+    h.pack(fill=X, side=TOP, anchor="nw")
+    Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile("INWARD-STOCK-TABLE"), bg="#484848",fg="#D0D0D0").pack(fill=X, pady=2, side=TOP)
+    UpdateStatus("Viewing Inward Stock Table ...")
+    # ===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame, highlightthickness=0)
+    f3 = Frame(canvas, padx=50, pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set)
+
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=True)
+
+    canvas.create_window((4, 4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
     try:
         df = pd.DataFrame(mydata, columns=headers)
         df.to_excel("EXCEL_OUTPUT/INWARD-STOCK-TABLE.xlsx", index=False, sheet_name="INWARD-STOCK TABLE")
-        print("\n\n\n    *** INWARD-STOCK TABLE ***")
-        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
-    except:
-        print("\n\n    *** PLEASE CLOSE THE FILE - INWARD-STOCK-TABLE.xlsx - and try again! ***\n\n")
+        #print("\n\n\n    *** INWARD-STOCK TABLE ***")
+        #print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        # =================Tkinter Table============================================================
+        rows = len(mydata)
+        columns = len(headers)
 
+        # Populate Headers
+        for x in range(len(headers)):
+            Label(f3, text=headers[x], padx=3, pady=3, font="Georgia 11").grid(row=0, column=x)
+
+        # Populate Table data
+        for ro in range(rows):
+            for col in range(columns):
+                Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
+    except:
+        #print("\n\n    *** PLEASE CLOSE THE FILE - INWARD-STOCK-TABLE.xlsx - and try again! ***\n\n")
+        UpdateStatus("Close the excel file to view the inward stock table !")
+        tmsg.showerror("Close the file", "CLOSE THE FILE - INWARD-STOCK-TABLE.xlsx - and try again!")
 
 
 def TableCASStock():
-    global List_ItemCode, List_Item, List_Quantity
+    Reconstruct_Destruction()
+    global List_ItemCode, List_Item, List_Quantity,  temp_frame,w1,w2,destroy_flag
 
     mydata = []
     n = 1  # For Serial No.
@@ -984,15 +1220,60 @@ def TableCASStock():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
+
+    # =============================================================================
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy()  # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
+
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+
+    h = Label(temp_frame, text=f"CAS-STOCK TABLE", font="Georgia 14 bold", relief=RIDGE, bd=2)
+    h.pack(fill=X, side=TOP, anchor="nw")
+    Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile("CAS-STOCK-TABLE"), bg="#484848",fg="#D0D0D0").pack(fill=X, pady=2, side=TOP)
+    UpdateStatus("Viewing CAS Stock Table ...")
+    # ===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame, highlightthickness=0)
+    f3 = Frame(canvas, padx=50, pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set)
+
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=True)
+
+    canvas.create_window((4, 4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
     try:
         df = pd.DataFrame(mydata, columns=headers)
         df.to_excel("EXCEL_OUTPUT/CAS-STOCK-TABLE.xlsx", index=False, sheet_name="CAS-STOCK TABLE")
-        print("\n\n\n    *** (CAS) COMPLETE ASSEMBLED SHAFTS - STOCK TABLE ***")
-        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        #print("\n\n\n    *** (CAS) COMPLETE ASSEMBLED SHAFTS - STOCK TABLE ***")
+        #print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        # =================Tkinter Table============================================================
+        rows = len(mydata)
+        columns = len(headers)
 
+        # Populate Headers
+        for x in range(len(headers)):
+            Label(f3, text=headers[x], padx=3, pady=3, font="Georgia 11").grid(row=0, column=x)
+
+        # Populate Table data
+        for ro in range(rows):
+            for col in range(columns):
+                Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
     except:
-        print("\n\n    *** PLEASE CLOSE THE FILE - CAS-STOCK-TABLE.xlsx - and try again! ***\n\n")
-
+        #print("\n\n    *** PLEASE CLOSE THE FILE - CAS-STOCK-TABLE.xlsx - and try again! ***\n\n")
+        UpdateStatus("Close the excel file to view the CAS stock table !")
+        tmsg.showerror("Close the file", "CLOSE THE FILE - CAS-STOCK-TABLE.xlsx - and try again!")
 
 def ReadCASLog():
     global List_ItemCode, List_Item, List_Quantity, List_TimeStamp
@@ -1024,7 +1305,8 @@ def ReadCASLog():
 
 
 def TableCASLog():
-    global List_TimeStamp, List_ItemCode, List_Item, List_Quantity
+    Reconstruct_Destruction()
+    global List_TimeStamp, List_ItemCode, List_Item, List_Quantity,  temp_frame,w1,w2,destroy_flag
 
     mydata = []
     n = 1  # For Serial No.
@@ -1042,13 +1324,60 @@ def TableCASLog():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "CAS-ENTRY-TIME", "I-CODE", "I-NAME", "QTY."]
+
+    # =============================================================================
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy()  # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
+
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+
+    h = Label(temp_frame, text=f"CAS-LOG TABLE", font="Georgia 14 bold", relief=RIDGE, bd=2)
+    h.pack(fill=X, side=TOP, anchor="nw")
+    Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile("CAS-LOG-TABLE"), bg="#484848",fg="#D0D0D0").pack(fill=X, pady=2, side=TOP)
+    UpdateStatus("Viewing CAS Log Table ...")
+    # ===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame, highlightthickness=0)
+    f3 = Frame(canvas, padx=50, pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set)
+
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=True)
+
+    canvas.create_window((4, 4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
     try:
         df = pd.DataFrame(mydata, columns=headers)
         df.to_excel("EXCEL_OUTPUT/CAS-LOG-TABLE.xlsx", index=False, sheet_name="CAS-LOG TABLE")
-        print("\n\n\n    *** (CAS) COMPLETE ASSEMBLED SHAFTS - LOG TABLE ***")
-        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        #print("\n\n\n    *** (CAS) COMPLETE ASSEMBLED SHAFTS - LOG TABLE ***")
+        #print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        # =================Tkinter Table============================================================
+        rows = len(mydata)
+        columns = len(headers)
+
+        # Populate Headers
+        for x in range(len(headers)):
+            Label(f3, text=headers[x], padx=3, pady=3, font="Georgia 11").grid(row=0, column=x)
+
+        # Populate Table data
+        for ro in range(rows):
+            for col in range(columns):
+                Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
     except:
-        print("\n\n    *** PLEASE CLOSE THE FILE - CAS-LOG-TABLE.xlsx - and try again! ***\n\n")
+        #print("\n\n    *** PLEASE CLOSE THE FILE - CAS-LOG-TABLE.xlsx - and try again! ***\n\n")
+        UpdateStatus("Close the excel file to view the CAS log table !")
+        tmsg.showerror("Close the file", "CLOSE THE FILE - CAS-LOG-TABLE.xlsx - and try again!")
 
 
 
@@ -1120,8 +1449,13 @@ def Widget_MINALERT():
 
 
 
-def TableShowSubAssemblies(temp_input, CAT):
-    global List_CAS_Entry, List_Grouped_Inward_Entry, List_ItemCode, List_Item, List_Quantity
+def TableShowSubAssemblies(CAT,var_code):
+    Reconstruct_Destruction()
+
+    global List_CAS_Entry, List_Grouped_Inward_Entry, List_ItemCode, List_Item, List_Quantity,temp_frame,w1,w2,destroy_flag
+    print(CAT,var_code)
+    temp_input = var_code.get()
+    temp_input = temp_input.upper()
     # Clear the buffers
     List_ItemCode = []
     List_Item = []
@@ -1150,7 +1484,9 @@ def TableShowSubAssemblies(temp_input, CAT):
             f.close()
 
         else:
-            print(f"\n    CAS-CODE - {temp_input} DOES NOT EXIST IN REGISTERED CAS ENTRY LIST !\n")
+            #print(f"\n    CAS-CODE - {temp_input} DOES NOT EXIST IN REGISTERED CAS ENTRY LIST !\n")
+            UpdateStatus(f"CAS-CODE - {temp_input} DOES NOT EXIST IN REGISTERED CAS ENTRY LIST !    |    Ready!")
+            tmsg.showerror("Error", f"CAS-CODE - {temp_input} DOES NOT EXIST IN REGISTERED CAS ENTRY LIST !")
             flag = 1
 
 
@@ -1176,11 +1512,14 @@ def TableShowSubAssemblies(temp_input, CAT):
                         List_Quantity.append(temp_list2[2])
             f.close()
         else:
-            print(f"\n    GIE-CODE - {temp_input} DOES NOT EXIST IN REGISTERED GIE ENTRY LIST !\n")
+            #print(f"\n    GIE-CODE - {temp_input} DOES NOT EXIST IN REGISTERED GIE ENTRY LIST !\n")
+            UpdateStatus(f"GIE-CODE - {temp_input} DOES NOT EXIST IN REGISTERED GIE ENTRY LIST !    |    Ready!")
+            tmsg.showerror("Error",f"GIE-CODE - {temp_input} DOES NOT EXIST IN REGISTERED GIE ENTRY LIST !")
             flag = 1
 
     else:
-        print("ERROR : NON OF CAT (CAS/GIE) MATCHED IN TABLE SHOW SUB-ASSEMBLEIS ")
+        #UpdateStatus("ERROR : NON OF CAT (CAS/GIE) MATCHED IN TABLE SHOW SUB-ASSEMBLEIS ")
+        tmsg.showerror("Error","NON OF CAT (CAS/GIE) MATCHED IN TABLE SHOW SUB-ASSEMBLEIS")
         flag = 1
 
     #============================= TABULATE ==============================================
@@ -1200,14 +1539,60 @@ def TableShowSubAssemblies(temp_input, CAT):
             mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
         headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
+
+        # =============================================================================
+        # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+        temp_frame.destroy()  # default stmnt that every times should occur.
+        w2.destroy()
+        # w2 is destroyed hence se destroy_flag = 1
+        destroy_flag = 1
+
+        temp_frame = Frame(w1)
+        w1.add(temp_frame)
+
+        h = Label(temp_frame, text=f"{CAT}-{temp_input}-SUB-ASSEMBLIES TABLE", font="Georgia 14 bold", relief=RIDGE, bd=2)
+        h.pack(fill=X, side=TOP, anchor="nw")
+        Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile(f"{CAT}-{temp_input}-SUB-ASSEMBLIES-TABLE"), bg="#484848",fg="#D0D0D0").pack(fill=X, pady=2, side=TOP)
+        UpdateStatus("Viewing Sub-Assemblies Table ...")
+        # ===========================Y  Scroll bar code =====================================
+
+        canvas = Canvas(temp_frame, highlightthickness=0)
+        f3 = Frame(canvas, padx=50, pady=50)
+        scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+        scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+        canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set)
+
+        scrollbar.pack(side="right", fill="y")
+        scrollbar2.pack(side="bottom", fill="x")
+        canvas.pack(fill="both", expand=True)
+
+        canvas.create_window((4, 4), window=f3)
+        f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+        def onFrameConfigure(canvas):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
         try:
             df = pd.DataFrame(mydata, columns=headers)
             df.to_excel(f"EXCEL_OUTPUT/{CAT}-{temp_input}-SUB-ASSEMBLIES-TABLE.xlsx", index=False, sheet_name=f"{CAT} {temp_input} SUB-ASSEMBLIES TABLE")
-            print(f"\n\n\n    *** {CAT} {temp_input} SUB-ASSEMBLIES TABLE ***")
-            print("\n\n", tabulate(mydata, headers=headers), "\n\n")
-        except:
-            print(f"\n\n    *** PLEASE CLOSE THE FILE - {CAT}-{temp_input}-SUB-ASSEMBLIES-TABLE.xlsx - and try again! ***\n\n")
+            #print(f"\n\n\n    *** {CAT} {temp_input} SUB-ASSEMBLIES TABLE ***")
+            #print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+            # =================Tkinter Table============================================================
+            rows = len(mydata)
+            columns = len(headers)
 
+            # Populate Headers
+            for x in range(len(headers)):
+                Label(f3, text=headers[x], padx=3, pady=3, font="Georgia 11").grid(row=0, column=x)
+
+            # Populate Table data
+            for ro in range(rows):
+                for col in range(columns):
+                    Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
+        except:
+            #print(f"\n\n    *** PLEASE CLOSE THE FILE - {CAT}-{temp_input}-SUB-ASSEMBLIES-TABLE.xlsx - and try again! ***\n\n")
+            UpdateStatus(f"Close the excel file to view the sub-assemblies table !")
+            tmsg.showerror(f"Close the file", "CLOSE THE FILE - {CAT}-{temp_input}-SUB-ASSEMBLIES-TABLE.xlsx - and try again!")
 
 
     #================================= OVER ==============================================================
@@ -1216,7 +1601,9 @@ def TableShowSubAssemblies(temp_input, CAT):
 
 
 def TableCASEntry():
-    global List_CAS_Entry, List_CAS_Entry_iname, List_CAS_SubAssemblies
+    Reconstruct_Destruction()
+    global List_CAS_Entry, List_CAS_Entry_iname, List_CAS_SubAssemblies,   temp_frame,w1,w2,destroy_flag
+    input_buffer=[]
     i = 0
     mydata = []
     n = 1  # For Serial No.
@@ -1233,23 +1620,81 @@ def TableCASEntry():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "CAS-CODE", "CAS-NAME", "SUB-ASSEMBLIES"]
+    # =============================================================================
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy()  # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
+
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+
+    h = Label(temp_frame, text=f"REGISTERED CAS-ENTRIES TABLE", font="Georgia 14 bold", relief=RIDGE, bd=2)
+    h.pack(fill=X, side=TOP, anchor="nw")
+    Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile("REGISTERED-CAS-ENTRIES-TABLE"), bg="#484848",fg="#D0D0D0").pack(fill=X, pady=2, side=TOP)
+    UpdateStatus("Viewing CAS Entry Table ...")
+    # ===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame, highlightthickness=0)
+    f3 = Frame(canvas, padx=50, pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set)
+
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=True)
+
+    canvas.create_window((4, 4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+
     try:
         df = pd.DataFrame(mydata, columns=headers)
-        df.to_excel("EXCEL_OUTPUT/REGISTERED-CAS-ENTIRES-TABLE.xlsx", index=False, sheet_name="REGISTERED CAS ENTIRES TABLE")
-        print("\n\n\n    *** REGISTERED ENTRIES TABLE of COMPLETE ASSEMBLED SHAFTS (CAS) ***")
-        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        df.to_excel("EXCEL_OUTPUT/REGISTERED-CAS-ENTRIES-TABLE.xlsx", index=False, sheet_name="REGISTERED CAS ENTRIES TABLE")
+        #print("\n\n\n    *** REGISTERED ENTRIES TABLE of COMPLETE ASSEMBLED SHAFTS (CAS) ***")
+        #print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+        # =================Tkinter Table============================================================
+        rows = len(mydata)
+        columns = len(headers)
+
+        # Populate Headers
+        for x in range(len(headers)):
+            Label(f3, text=headers[x], padx=3, pady=3, font="Georgia 11").grid(row=0, column=x)
+
+        # Populate Table data
+        for ro in range(rows):
+            for col in range(columns):
+                Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
+
+
+
         if (len(List_CAS_Entry) != 0):
-            temp_input = input("\n\n    *** ENTER CAS-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
-            GoToMenu(temp_input)
-            TableShowSubAssemblies(temp_input.upper(), "CAS")
+
+            #temp_input = input("\n\n    *** ENTER CAS-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
+            #GoToMenu(temp_input)
+            #TableShowSubAssemblies(temp_input.upper(), "CAS")
+            Label(temp_frame,text="ENTER CAS-CODE TO VIEW ITS SUB-ASSEMBLIES :", bg="#484848",fg="#D0D0D0").pack(fill=X)
+            var_code=StringVar()
+            Entry(temp_frame, textvariable=var_code).pack(pady=5)
+
+            Button(temp_frame,text="Submit", bg="#484848",fg="#D0D0D0",command=lambda:TableShowSubAssemblies("CAS",var_code) ).pack()
     except:
-        print("\n\n    *** PLEASE CLOSE THE FILE - REGISTERED-CAS-ENTIRES-TABLE.xlsx - and try again! ***\n\n")
+        #print("\n\n    *** PLEASE CLOSE THE FILE - REGISTERED-CAS-ENTIRES-TABLE.xlsx - and try again! ***\n\n")
+        UpdateStatus("Close the excel file to view the CAS entry table !")
+        tmsg.showerror("Close the file", "CLOSE THE FILE - REGISTERED-CAS-ENTRIES-TABLE.xlsx - and try again!")
 
 
 
 
 def TableGIE():
-    global List_Grouped_Inward_Entry, List_GIE_name, List_GIE_SubAssemblies
+    Reconstruct_Destruction()
+    global List_Grouped_Inward_Entry, List_GIE_name, List_GIE_SubAssemblies,temp_frame,w1,w2,destroy_flag
 
     mydata = []
     n = 1  # For Serial No.
@@ -1266,24 +1711,81 @@ def TableGIE():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "GIE-CODE", "GIE-NAME", "SUB-ASSEMBLIES"]
+
+    # =============================================================================
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy()  # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
+
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+
+    h = Label(temp_frame, text=f"REGISTERED GIE-ENTRIES TABLE", font="Georgia 14 bold", relief=RIDGE, bd=2)
+    h.pack(fill=X, side=TOP, anchor="nw")
+    Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile("REGISTERED-GIE-ENTRIES-TABLE"),bg="#484848", fg="#D0D0D0").pack(fill=X, pady=2, side=TOP)
+    UpdateStatus("Viewing GIE Entry Table ...")
+    # ===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame, highlightthickness=0)
+    f3 = Frame(canvas, padx=50, pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set)
+
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=True)
+
+    canvas.create_window((4, 4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+
     try:
         df = pd.DataFrame(mydata, columns=headers)
-        df.to_excel("EXCEL_OUTPUT/REGISTERED-GIE-ENTIRES-TABLE.xlsx", index=False, sheet_name="REGISTERED GIE ENTIRES TABLE")
-        print("\n\n\n    *** REGISTERED ENTRIES TABLE of GROUPED INWARD ENTRIES (GIE) ***")
-        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        df.to_excel("EXCEL_OUTPUT/REGISTERED-GIE-ENTRIES-TABLE.xlsx", index=False, sheet_name="REGISTERED GIE ENTRIES TABLE")
+        #print("\n\n\n    *** REGISTERED ENTRIES TABLE of GROUPED INWARD ENTRIES (GIE) ***")
+        #print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+
+        # =================Tkinter Table============================================================
+        rows = len(mydata)
+        columns = len(headers)
+
+        # Populate Headers
+        for x in range(len(headers)):
+            Label(f3, text=headers[x], padx=3, pady=3, font="Georgia 11").grid(row=0, column=x)
+
+        # Populate Table data
+        for ro in range(rows):
+            for col in range(columns):
+                Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
+
         if (len(List_Grouped_Inward_Entry) != 0):
-            temp_input = input("\n\n    *** ENTER GIE-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
-            GoToMenu(temp_input)
-            TableShowSubAssemblies(temp_input.upper(), "GIE")
+            #temp_input = input("\n\n    *** ENTER GIE-CODE TO VIEW ITS SUB-ASSEMBLIES : ")
+            #GoToMenu(temp_input)
+            #TableShowSubAssemblies(temp_input.upper(), "GIE")
+            Label(temp_frame, text="ENTER GIE-CODE TO VIEW ITS SUB-ASSEMBLIES :", bg="#484848",fg="#D0D0D0").pack(fill=X)
+            var_code = StringVar()
+            Entry(temp_frame, textvariable=var_code).pack(pady=5)
+
+            Button(temp_frame, text="Submit", command=lambda: TableShowSubAssemblies("GIE", var_code)).pack()
+
     except:
-        print("\n\n    *** PLEASE CLOSE THE FILE - REGISTERED-GIE-ENTIRES-TABLE.xlsx - and try again! ***\n\n")
+        #print("\n\n    *** PLEASE CLOSE THE FILE - REGISTERED-GIE-ENTIRES-TABLE.xlsx - and try again! ***\n\n")
+        UpdateStatus("Close the excel file to view the GIE entry table !")
+        tmsg.showerror("Close the file", "CLOSE THE FILE - REGISTERED-GIE-ENTRIES-TABLE.xlsx - and try again!")
 
 
 
 
 
 def TableMIN():
-    global List_MIN_iCode_Entry, List_MIN_iName_Entry, List_MIN_iValue_Entry
+    Reconstruct_Destruction()
+    global List_MIN_iCode_Entry, List_MIN_iName_Entry, List_MIN_iValue_Entry,   temp_frame,w1,w2,destroy_flag
 
     mydata = []
     n = 1  # For Serial No.
@@ -1300,20 +1802,71 @@ def TableMIN():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "I-CODE", "I-NAME", "MIN QUANTITY"]
+
+    # =============================================================================
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy()  # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
+
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+
+    h = Label(temp_frame, text=f"REGISTERED (MIN-QTY) MINIMUM QUANTITY TABLE", font="Georgia 14 bold", relief=RIDGE, bd=2)
+    h.pack(fill=X, side=TOP, anchor="nw")
+    Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile("REGISTERED-MIN-QTY-TABLE"), bg="#484848",fg="#D0D0D0").pack(fill=X, pady=2, side=TOP)
+    UpdateStatus("Viewing Registered MIN QTY Table ...")
+    # ===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame, highlightthickness=0)
+    f3 = Frame(canvas, padx=50, pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set)
+
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=True)
+
+    canvas.create_window((4, 4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+    # =================================================================================
+
+
     try:
         df = pd.DataFrame(mydata, columns=headers)
         df.to_excel("EXCEL_OUTPUT/REGISTERED-MIN-QTY-TABLE.xlsx", index=False, sheet_name="REGISTERED MIN QTY TABLE")
-        print("\n\n\n    *** REGISTERED ENTRIES TABLE of MINIMUM QUANTITIES FOR NET-STOCK (MIN) ***")
-        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
-    except:
-        print("\n\n    *** PLEASE CLOSE THE FILE - REGISTERED-MIN-QTY-TABLE.xlsx - and try again! ***\n\n")
+        #print("\n\n\n    *** REGISTERED ENTRIES TABLE of MINIMUM QUANTITIES FOR NET-STOCK (MIN) ***")
+        #print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        # =================Tkinter Table============================================================
+        rows = len(mydata)
+        columns = len(headers)
 
+        # Populate Headers
+        for x in range(len(headers)):
+            Label(f3, text=headers[x], padx=3, pady=3, font="Georgia 11").grid(row=0, column=x)
+
+        # Populate Table data
+        for ro in range(rows):
+            for col in range(columns):
+                Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
+
+    except:
+        #print("\n\n    *** PLEASE CLOSE THE FILE - REGISTERED-MIN-QTY-TABLE.xlsx - and try again! ***\n\n")
+        UpdateStatus("Close the excel file to view the registered MIN QTY table !")
+        tmsg.showerror("Close the file", "CLOSE THE FILE - REGISTERED-MIN-QTY-TABLE.xlsx - and try again!")
 
 
 
 
 def TableOutwardStock():
-    global List_ItemCode, List_Item, List_Quantity
+    Reconstruct_Destruction()
+    global List_ItemCode, List_Item, List_Quantity,   temp_frame,w1,w2,destroy_flag
 
     mydata = []
     n = 1  # For Serial No.
@@ -1330,14 +1883,63 @@ def TableOutwardStock():
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.", "I-CODE", "I-NAME", "QTY."]
+
+    # =============================================================================
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy()  # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
+
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+
+    h = Label(temp_frame, text=f"OUTWARD-STOCK TABLE", font="Georgia 14 bold", relief=RIDGE,
+              bd=2)
+    h.pack(fill=X, side=TOP, anchor="nw")
+    Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile("OUTWARD-STOCK-TABLE"), bg="#484848",fg="#D0D0D0").pack(fill=X, pady=2, side=TOP)
+    UpdateStatus("Viewing Outward Stock Table ...")
+    # ===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame, highlightthickness=0)
+    f3 = Frame(canvas, padx=50, pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set)
+
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=True)
+
+    canvas.create_window((4, 4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+
     try:
         df = pd.DataFrame(mydata, columns=headers)
         df.to_excel("EXCEL_OUTPUT/OUTWARD-STOCK-TABLE.xlsx", index=False, sheet_name="OUTWARD-STOCK TABLE")
-        print("\n\n\n    *** OUTWARD-STOCK TABLE ***")
-        print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        #print("\n\n\n    *** OUTWARD-STOCK TABLE ***")
+        #print("\n\n", tabulate(mydata, headers=headers), "\n\n")
+        # =================Tkinter Table============================================================
+        rows = len(mydata)
+        columns = len(headers)
+
+        # Populate Headers
+        for x in range(len(headers)):
+            Label(f3, text=headers[x], padx=3, pady=3, font="Georgia 11").grid(row=0, column=x)
+
+        # Populate Table data
+        for ro in range(rows):
+            for col in range(columns):
+                Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
 
     except:
-        print("\n\n    *** PLEASE CLOSE THE FILE - OUTWARD-STOCK-TABLE.xlsx - and try again! ***\n\n")
+        #print("\n\n    *** PLEASE CLOSE THE FILE - OUTWARD-STOCK-TABLE.xlsx - and try again! ***\n\n")
+        UpdateStatus("Close the excel file to view the outward stock table !")
+        tmsg.showerror("Close the file", "CLOSE THE FILE - OUTWARD-STOCK-TABLE.xlsx - and try again!")
 
 
 
@@ -1386,12 +1988,13 @@ def View(file):
         TableOutwardStock()
 
     else:
-        print("    ERROR MATCHING FILE NAME")
+        UpdateStatus("ERROR MATCHING FILE NAME")
         pass
     #========================================================================
 #========================================== CAS =========================================================
 
 def EnterCAS():
+    Reconstruct_Destruction()
     # # Menu to capture CAS Item details
     # while (True):
     #     while (True):
@@ -1694,6 +2297,7 @@ def CAS():
         else:UpdateStatus("Logging is NOT Feasible for CAS due to missing sub-assemblies ...    |    Waiting for user to enter a CAS item ...")
 
 def Enter_ENTRY_CAS():
+    Reconstruct_Destruction()
     # # Menu to capture CATEGORY (CAS/ GIE) ENTRY details with SUB ASSEMBILIES
     # name=""
     # if CAT == "CAS":
@@ -1741,6 +2345,7 @@ def Enter_ENTRY_CAS():
 
     # =============================================================================================
     def GET_VAL():
+
         global input_buffer
         input_buffer = []
         if (icode.get() == "" or iname.get() == "" or iqty.get() == ""):
@@ -1801,6 +2406,7 @@ def Enter_ENTRY_CAS():
     Button(temp_frame, text="Submit", font="TimesNewRoman 12", width="50", command=GET_VAL).grid(row=7, column=2)
 
 def Enter_ENTRY_GIE():
+    Reconstruct_Destruction()
     global f2, input_buffer, temp_frame
 
     UpdateHead("Register Grouped Inward Entry (GIE) Item")
@@ -1970,6 +2576,7 @@ def Write_Entry(data, filename, CAT):
 
 
 def Enter_SubAssemblies(data):
+    Reconstruct_Destruction()
     # global List_ItemCode, List_Item, List_Quantity
     # # Clear Buffers
     # List_Item = []
@@ -2017,7 +2624,7 @@ def Enter_SubAssemblies(data):
     #     List_Quantity.append(q)
     #     p=p+1
     #
-    global f2, temp_frame, List_Item, List_ItemCode, List_Quantity
+    global temp_frame, List_Item, List_ItemCode, List_Quantity,w2,w1, destroy_flag
     # Clear buffers
     List_Item = []
     List_Quantity = []
@@ -2052,48 +2659,73 @@ def Enter_SubAssemblies(data):
         Write_SubAssemblies(input_buffer)
 
     # =============================================================================
-    # Destroy the existing frame and create new frame
-    temp_frame.destroy()
-    temp_frame = Frame(f2, pady=100)
-    temp_frame.pack()
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy() # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
+
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+
+    h = Label(temp_frame, text=f"Enter Sub-Assemblies of {data[0]} - {data[1]}", font="Georgia 14 bold", relief=RIDGE, bd=2)
+    h.pack(fill=X, side=TOP, anchor="nw")
+    #===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame,highlightthickness=0)
+    f3 = Frame(canvas, padx=50, pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    scrollbar.pack(side="right", fill="y")
+    canvas.pack( fill="both", expand=True)
+    canvas.create_window((4,4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+    #=================================================================================
+
+
     k = 0
     # Label Headings
     for p in range(int(data[2])):
 
-        Label(temp_frame, text=f"({(p+1)})", font="TimesNewRoman 12").grid(row=k, column=0)
+        Label(f3, text=f"({(p+1)})", font="TimesNewRoman 12").grid(row=k, column=0) # Sr.No
 
-        Label(temp_frame, text="Sub-Assembly Item Code", font="TimesNewRoman 12").grid(row=k, column=1)
-        Label(temp_frame, text="Sub-Assembly Item Name", font="TimesNewRoman 12").grid(row=k+1, column=1)
-        Label(temp_frame, text="Sub-Assembly Quantity", font="TimesNewRoman 12").grid(row=k+2, column=1)
-        Label(temp_frame, text=" ", font="TimesNewRoman 12").grid(row=k+3, column=1)
+        Label(f3, text="Sub-Assembly Item Code", font="TimesNewRoman 12").grid(row=k, column=1)
+        Label(f3, text="Sub-Assembly Item Name", font="TimesNewRoman 12").grid(row=k+1, column=1)
+        Label(f3, text="Sub-Assembly Quantity", font="TimesNewRoman 12").grid(row=k+2, column=1)
+        Label(f3, text=" ", font="TimesNewRoman 12").grid(row=k+3, column=1)
 
-        Label(temp_frame, text=":", font="TimesNewRoman 12").grid(row=k, column=2)
-        Label(temp_frame, text=":", font="TimesNewRoman 12").grid(row=k+1, column=2)
-        Label(temp_frame, text=":", font="TimesNewRoman 12").grid(row=k+2, column=2)
-        Label(temp_frame, text=" ", font="TimesNewRoman 12").grid(row=k + 3, column=2)
+        Label(f3, text=":", font="TimesNewRoman 12").grid(row=k, column=2)
+        Label(f3, text=":", font="TimesNewRoman 12").grid(row=k+1, column=2)
+        Label(f3, text=":", font="TimesNewRoman 12").grid(row=k+2, column=2)
+        Label(f3, text=" ", font="TimesNewRoman 12").grid(row=k + 3, column=2)
 
-
-        e1 = Entry(temp_frame, font="TimesNewRoman 12", width="80")
+        # append Entry inouts in a list
+        e1 = Entry(f3, font="TimesNewRoman 12", width="80")
         e1.grid(row=k, column=3)
         List_ItemCode.append(e1)
 
-        e2 = Entry(temp_frame, font="TimesNewRoman 12", width="80")
+        e2 = Entry(f3, font="TimesNewRoman 12", width="80")
         e2.grid(row=k+1, column=3)
         List_Item.append(e2)
 
-        e3 = Entry(temp_frame, font="TimesNewRoman 12", width="80")
+        e3 = Entry(f3, font="TimesNewRoman 12", width="80")
         e3.grid(row=k+2, column=3)
         List_Quantity.append(e3)
 
-        Label(temp_frame, text=" ", font="TimesNewRoman 12").grid(row=k + 3, column=3)
+        Label(f3, text=" ", font="TimesNewRoman 12").grid(row=k + 3, column=3)
         k=k+4
 
-    Button(temp_frame, text="Submit", font="TimesNewRoman 12", width="80", command=GET_VAL).grid(row=((4*int(data[2]))+1), column=3)
+    Button(f3, text="Submit", font="TimesNewRoman 12", width="80", command=GET_VAL).grid(row=((4*int(data[2]))+1), column=3)
 
 
 
 def Write_SubAssemblies(data):
-    global List_ItemCode, List_Item, List_Quantity, temp_frame
+    global List_ItemCode, List_Item, List_Quantity
     CreateFileIfNotExist(f"{data[0]}.dnd")
     f = open(f"{data[0]}.dnd", "w")
     i = 0
@@ -2103,12 +2735,13 @@ def Write_SubAssemblies(data):
         i = i + 1
     f.write(s)
     f.close()
-    UpdateStatus(f"SUCCESSFUL REGISTRATION OF {data[0]} - {data[1]} WITH {data[2]} SUB-ASSEMBLIES !")
-    temp_frame.destroy()
-    temp_frame = Frame(f2, pady=100)
-    temp_frame.pack()
-    UpdateHead(" ")
+
+    UpdateStatus(f"SUCCESSFUL REGISTRATION OF {data[0]} - {data[1]} WITH {data[2]} SUB-ASSEMBLIES !    |    Ready !")
+    #=============== Recontruction code =================================================
+    Reconstruct_Destruction()
+    #=======================================================================
     tmsg.showinfo("Successful",f"SUCCESSFUL REGISTRATION OF {data[0]} - {data[1]} WITH {data[2]} SUB-ASSEMBLIES !")
+
 
 
 
@@ -2135,6 +2768,7 @@ def Register_GIE():
         #Write_SubAssemblies(temp1)
 
 def Enter_MIN_Entry():
+    Reconstruct_Destruction()
     # while (True):
     #     while (True):
     #         while(True):
@@ -2170,7 +2804,7 @@ def Enter_MIN_Entry():
     # return [i,n,q]
     global f2, input_buffer, temp_frame
 
-    UpdateHead("Register Minimum Quantity of an Item for Net Stock")
+    UpdateHead("Register (MIN QTY) Minimum Quantity of an Item for Net Stock")
     UpdateStatus("Waiting for user to register MIN QTY item details ...")
 
     # =============================================================================================
@@ -2372,13 +3006,13 @@ l1.pack(fill=X,pady=5)
 l2=Label(f1,text="LOG ITEMS", font="Helvetica 8 bold",bg="red",fg="#faebd7")
 l2.pack(fill=X, pady=10)
 
-b1=Button( f1, text="LOG INWARD ITEM", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterInwardItem)
+b1=Button( f1, text="1. INWARD ITEM", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterInwardItem)
 b1.pack(fill=X)
 
-b2=Button( f1, text="LOG OUTWARD ITEM", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterOutwardItem)
+b2=Button( f1, text="2. OUTWARD ITEM", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterOutwardItem)
 b2.pack(fill=X)
 
-b3=Button( f1, text="LOG COMPLETE ASSEMBLED SHAFTS (CAS)", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterCAS)
+b3=Button( f1, text="3. COMPLETE ASSEMBLED SHAFTS (CAS)", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterCAS)
 b3.pack(fill=X)
 #=====================================================================================
 # View Logs
@@ -2386,13 +3020,13 @@ b3.pack(fill=X)
 l3=Label(f1,text="VIEW LOGS", font="Helvetica 8 bold",bg="#6a097d", fg="#D4AFCD")
 l3.pack(fill=X,pady=10)
 
-b4=Button( f1, text="INWARD LOG", font="Helvetica 8 bold",bg="#D4AFCD",fg="#6a097d",command=fun1)
+b4=Button( f1, text="4. INWARD LOG", font="Helvetica 8 bold",bg="#D4AFCD",fg="#6a097d",command=lambda: View(file_inward_log))
 b4.pack(fill=X)
 
-b5=Button( f1, text="OUTWARD LOG", font="Helvetica 8 bold",bg="#D4AFCD",fg="#6a097d",command=fun1)
+b5=Button( f1, text="5. OUTWARD LOG", font="Helvetica 8 bold",bg="#D4AFCD",fg="#6a097d",command=lambda: View(file_outward_log))
 b5.pack(fill=X)
 
-b6=Button( f1, text="CAS LOG", font="Helvetica 8 bold",bg="#D4AFCD",fg="#6a097d",command=fun1)
+b6=Button( f1, text="6. CAS LOG", font="Helvetica 8 bold",bg="#D4AFCD",fg="#6a097d",command=lambda: View(file_CAS_log))
 b6.pack(fill=X)
 
 #======================================================================================
@@ -2401,29 +3035,29 @@ b6.pack(fill=X)
 l4=Label(f1,text="VIEW STOCKS", font="Helvetica 8 bold",bg="green", fg="#B2DBBF")
 l4.pack(fill=X, pady=10)
 
-b7=Button( f1, text="INWARD STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=fun1)
+b7=Button( f1, text="7. INWARD STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=lambda: View(file_inward_stock))
 b7.pack(fill=X)
 
-b8=Button( f1, text="OUTWARD STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=fun1)
+b8=Button( f1, text="8. OUTWARD STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=lambda: View(file_outward_stock))
 b8.pack(fill=X)
 
-b9=Button( f1, text="CAS STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=fun1)
+b9=Button( f1, text="9. CAS STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=lambda: View(file_CAS_stock))
 b9.pack(fill=X)
 
-b10=Button( f1, text="NET STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=fun1)
+b10=Button( f1, text="10. NET STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=lambda: View(file_net_stock))
 b10.pack(fill=X)
 #=============================================================================================
 # Register
 l5=Label(f1,text="REGISTER", font="Helvetica 8 bold",bg="#120136", fg="#40bad5")
 l5.pack(fill=X,pady=10)
 
-b11=Button( f1, text="CAS", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_ENTRY_CAS)
+b11=Button( f1, text="A. CAS", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_ENTRY_CAS)
 b11.pack(fill=X)
 
-b12=Button( f1, text="GROUPED-INWARD-ENTRY (GIE)", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_ENTRY_GIE)
+b12=Button( f1, text="B. GROUPED-INWARD-ENTRY (GIE)", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_ENTRY_GIE)
 b12.pack(fill=X)
 
-b13=Button( f1, text="MIN QUANTITY", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_MIN_Entry)
+b13=Button( f1, text="C. MIN QUANTITY", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_MIN_Entry)
 b13.pack(fill=X)
 #=====================================================================================
 # View Registered Entires
@@ -2431,13 +3065,13 @@ b13.pack(fill=X)
 l6=Label(f1,text="VIEW REGISTERED ENTRIES", font="Helvetica 8 bold",bg="orange", fg="brown")
 l6.pack(fill=X,pady=10)
 
-b14=Button( f1, text="CAS ENTRIES", font="Helvetica 8 bold",bg="brown",fg="orange",command=fun1)
+b14=Button( f1, text="D. CAS ENTRIES", font="Helvetica 8 bold",bg="brown",fg="orange",command=lambda: View(file_CAS_Entry))
 b14.pack(fill=X)
 
-b15=Button( f1, text="GIE ENTRIES", font="Helvetica 8 bold",bg="brown",fg="orange",command=fun1)
+b15=Button( f1, text="E. GIE ENTRIES", font="Helvetica 8 bold",bg="brown",fg="orange",command=lambda: View(file_Grouped_Inward_Entry))
 b15.pack(fill=X)
 
-b16=Button( f1, text="MIN QTY ENTRIES", font="Helvetica 8 bold",bg="brown",fg="orange",command=fun1)
+b16=Button( f1, text="F. MIN QTY ENTRIES", font="Helvetica 8 bold",bg="brown",fg="orange",command=lambda: View(file_MIN_Entry))
 b16.pack(fill=X)
 #======================================================================================
 # Paned Window2
