@@ -1,10 +1,7 @@
 from tkinter import *
 import pandas as pd
-from tabulate import tabulate
 import  tkinter.messagebox as tmsg
 import os
-
-def fun1(): pass
 
 # Attributes = ["Item Code", "Item", "Quantity", "SUPPLIER/CUSTOMER NAME", "DOCUMENT NO.", "Date", "Remarks"]
 PassWord = "testdndplough"
@@ -20,7 +17,7 @@ file_Grouped_Inward_Entry = "GroupedInwardEntry.dnd"
 file_MIN_Entry = "MIN_Entry.dnd"
 file_outward_stock = "OutwardItemStock.dnd"
 
-
+refresh_flag= 1 # No need to refresh (destroy root)
 # Feasible then proceed or not
 proceed_flag = 1 # default
 
@@ -635,7 +632,7 @@ def Subtract_Grouped_Inward_Item(ListOfCASInputs):
         #       f" {ListOfCASInputs[1]} - {ListOfCASInputs[0]} IN OUTWARD!\n"
         #       f"==========================================================================\n")
         tmsg.showerror("NOT Feasible !",f"Insufficient SUB-ASSEMBLIES IN NET STOCK for GIE item {ListOfCASInputs[0]} - {ListOfCASInputs[1]} ")
-        TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs)
+        TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs, "GIE")
         return False
     # IF CONTROL REACHES HERE
     # MEANS ALL SUB ASSEMBLIES ARE PRESENT AND NET STOCK QUANTITY MUST BE WRITTEN WITH UPDATED LIST BUFFERS.
@@ -1118,11 +1115,18 @@ def TableNetStock():
 
         # Populate Table data
         for ro in range(rows):
-            for col in range(columns):
-                Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
+            if(mydata[ro][5]=="PLACE ORDER"):
+                for col in range(columns): #red
+                    Label(f3, text=mydata[ro][col], padx=5, pady=5,bg="red",fg="white").grid(row=ro + 1, column=col,sticky="nsew")
+            else:
+                for col in range(columns): #green
+                    Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col,sticky="nsew")
 
-    except:
+
+
+    except Exception as e:
         #print("\n\n    *** PLEASE CLOSE THE FILE - NET-STOCK-TABLE.xlsx - and try again! ***\n\n")
+        print(e)
         UpdateStatus("Close the excel file to view the net stock table !")
         tmsg.showerror("Close the file", "CLOSE THE FILE - NET-STOCK-TABLE.xlsx - and try again!")
 
@@ -1453,7 +1457,7 @@ def TableShowSubAssemblies(CAT,var_code):
     Reconstruct_Destruction()
 
     global List_CAS_Entry, List_Grouped_Inward_Entry, List_ItemCode, List_Item, List_Quantity,temp_frame,w1,w2,destroy_flag
-    print(CAT,var_code)
+
     temp_input = var_code.get()
     temp_input = temp_input.upper()
     # Clear the buffers
@@ -2122,8 +2126,9 @@ def Read_CAS_SubASSEMBLIES(ListOfCASInputs):
     f.close()
 
 
-def TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs):
-
+def TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs, CAT):
+    Reconstruct_Destruction()
+    global temp_frame,w1,w2,destroy_flag
 
     mydata = []
     n = 1  # For Serial No.
@@ -2140,11 +2145,61 @@ def TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs):
         mydata.append(temp_tuple)  # AT LAST WE NEED LIST OF TUPLES WHERE EACH TUPLE IS A ROW OF ALL ATTRIBUTES.
 
     headers = ["SR NO.","I-CODE", "I-NAME", "QTY."]
+
     # print(f"\n\n\n    *** >>> {ListOfCASInputs[1]} - {ListOfCASInputs[0]} <<< MISSING SUB ASSEMBLIES TABLE ***")
     # print("\n\n", tabulate(mydata, headers=headers), "\n\n")
-    tmsg.showinfo(f"Missing Sub-Assemblies | Outward operation on {ListOfCASInputs[1]} - {ListOfCASInputs[0]}", f"\n\n{tabulate(mydata, headers=headers)}\n\n" )
+    #tmsg.showinfo(f"Missing Sub-Assemblies | Outward operation on {ListOfCASInputs[1]} - {ListOfCASInputs[0]}", f"\n\n{tabulate(mydata, headers=headers)}\n\n" )
+    # =============================================================================
+    # Destroy the existing temp frame and create new temp frame | ALso destroy w2 paned window. | Put Temp Frame in w1 paned window.
+    temp_frame.destroy()  # default stmnt that every times should occur.
+    w2.destroy()
+    # w2 is destroyed hence se destroy_flag = 1
+    destroy_flag = 1
 
+    temp_frame = Frame(w1)
+    w1.add(temp_frame)
+    if CAT == "CAS":
+        h = Label(temp_frame, text=f"Missing Sub-Assemblies of CAS : {ListOfCASInputs[0]}  |  CAS INFEASIBLE LOG QTY - {ListOfCASInputs[2]}", font="Georgia 14 bold", relief=RIDGE,bd=2)
+        h.pack(fill=X, side=TOP, anchor="nw")
+        UpdateStatus(f"Viewing Missing Sub-Assemblies Table of CAS {ListOfCASInputs[0]} - {ListOfCASInputs[1]}   |  CAS INFEASIBLE LOG QTY - {ListOfCASInputs[2]} ...")
+    elif CAT == "GIE":
+        h = Label(temp_frame,text=f"Missing Sub-Assemblies of GIE : {ListOfCASInputs[0]}  |  GIE INFEASIBLE OUTWARD  QTY - {ListOfCASInputs[2]}",font="Georgia 14 bold", relief=RIDGE, bd=2)
+        h.pack(fill=X, side=TOP, anchor="nw")
+        UpdateStatus(f"Viewing Missing Sub-Assemblies Table of GIE {ListOfCASInputs[0]} - {ListOfCASInputs[1]}   |  GIE INFEASIBLE OUTWARD QTY - {ListOfCASInputs[2]}...")
+    else: tmsg.showerror("Error","Didnt Match CAT argument in TableMissingItems")
+    #Button(temp_frame, text="Open Excel File", command=lambda: OpenExcelFile("OUTWARD-STOCK-TABLE"), bg="#484848",fg="#D0D0D0").pack(fill=X, pady=2, side=TOP)
 
+    # ===========================Y  Scroll bar code =====================================
+
+    canvas = Canvas(temp_frame, highlightthickness=0)
+    f3 = Frame(canvas, padx=50, pady=50)
+    scrollbar = Scrollbar(temp_frame, orient="vertical", command=canvas.yview)
+    scrollbar2 = Scrollbar(temp_frame, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=scrollbar.set, xscrollcommand=scrollbar2.set)
+
+    scrollbar.pack(side="right", fill="y")
+    scrollbar2.pack(side="bottom", fill="x")
+    canvas.pack(fill="both", expand=True)
+
+    canvas.create_window((4, 4), window=f3)
+    f3.bind("<Configure>", lambda event, canvas=canvas: onFrameConfigure(canvas))
+
+    def onFrameConfigure(canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+        # =================Tkinter Table============================================================
+        rows = len(mydata)
+        columns = len(headers)
+
+        # Populate Headers
+        for x in range(len(headers)):
+            Label(f3, text=headers[x], padx=3, pady=3, font="Georgia 11").grid(row=0, column=x)
+
+        # Populate Table data
+        for ro in range(rows):
+            for col in range(columns):
+                Label(f3, text=mydata[ro][col], padx=5, pady=5).grid(row=ro + 1, column=col)
+        #=========================================================================================
 
 def CAS_Subtract(ListOfCASInputs):
     global List_ItemCode, List_Item, List_Quantity, List_CAS_Item, List_CAS_ItemCode, List_CAS_Quantity, proceed_flag
@@ -2202,7 +2257,7 @@ def CAS_Subtract(ListOfCASInputs):
         #       f" {ListOfCASInputs[1]} - {ListOfCASInputs[0]} IN CAS!\n"
         #       f"==========================================================================\n")
         tmsg.showerror("NOT Feasible !",f"Insufficient SUB-ASSEMBLIES IN NET STOCK for CAS item {ListOfCASInputs[0]} - {ListOfCASInputs[1]} ")
-        TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs)
+        TableMissingItems(temp_icode, temp_iname, temp_iquantity, ListOfCASInputs, "CAS")
         return False
     # IF CONTROL REACHES HERE
     # MEANS ALL SUB ASSEMBLIES ARE PRESENT AND NET STOCK QUANTITY MUST BE WRITTEN WITH UPDATED LIST BUFFERS.
@@ -2294,7 +2349,7 @@ def CAS():
         if proceed_flag == 0:
             UpdateStatus(" Feasible inward CAS operation ABORTED !    |    Waiting for user to enter a CAS item ...")
             return
-        else:UpdateStatus("Logging is NOT Feasible for CAS due to missing sub-assemblies ...    |    Waiting for user to enter a CAS item ...")
+
 
 def Enter_ENTRY_CAS():
     Reconstruct_Destruction()
@@ -2966,132 +3021,135 @@ def Register_MIN():
 #             return True
 #
 # if PASSWORD(): Menu()
+def Refresh():
+    # Geometry is the default application window size when it is launched.
+    global root,w1,w2,Status,Title,f1,f2,headingtext,Head,temp_frame,statustext
+    root.destroy()
+    root=Tk()
+    root.geometry("733x434")
 
+    # MINIMUM WINDOW SIZE
+    root.minsize(933, 634)
+
+    # Windows's Title
+    root.title("INVENTORY - DND PLOUGH")
+    root.iconbitmap("inventory-icon-png-8.ico")
+    # Label = user can't interact with label
+    Title = Label(text="INVENTORY - DND PLOUGH", bg="black", fg="white", font=("comicsansms", 8))
+    Title.pack(fill=X)
+
+    statustext = StringVar()
+    statustext.set("Status - Ready !")
+    Status = Label(textvariable=statustext, anchor=W, bg="orange", fg="black", padx="2", pady="2",
+                   font=("comicsansms", 8))
+    Status.pack(side=BOTTOM, fill=X)
+    # ========================================================
+    # Paned Window 1
+    w1 = PanedWindow(root)
+    w1.pack(fill=BOTH, expand=1)
+    # =========================================================
+    f1 = Frame(w1, bg="#2B2D2F", borderwidth=6, relief=RIDGE, padx="4")
+    w1.add(f1)
+    # ==============================================================
+    Label(f1, text="MENU", font="Helvetica 8 bold", ).pack(fill=X, pady=5)
+    # =====================================================
+    # Log Items
+    Label(f1, text="LOG ITEMS", font="Helvetica 8 bold", bg="red", fg="#faebd7").pack(fill=X, pady=10)
+
+    Button(f1, text="1. INWARD ITEM", font="Helvetica 8 bold", bg="#faebd7", fg="red", command=EnterInwardItem).pack(fill=X)
+
+    Button(f1, text="2. OUTWARD ITEM", font="Helvetica 8 bold", bg="#faebd7", fg="red", command=EnterOutwardItem).pack(fill=X)
+
+    Button(f1, text="3. COMPLETE ASSEMBLED SHAFTS (CAS)", font="Helvetica 8 bold", bg="#faebd7", fg="red",command=EnterCAS).pack(fill=X)
+    # =====================================================================================
+    # View Logs
+
+    Label(f1, text="VIEW LOGS", font="Helvetica 8 bold", bg="#6a097d", fg="#D4AFCD").pack(fill=X, pady=10)
+
+    Button(f1, text="4. INWARD LOG", font="Helvetica 8 bold", bg="#D4AFCD", fg="#6a097d",command=lambda: View(file_inward_log)).pack(fill=X)
+
+    Button(f1, text="5. OUTWARD LOG", font="Helvetica 8 bold", bg="#D4AFCD", fg="#6a097d",command=lambda: View(file_outward_log)).pack(fill=X)
+
+    Button(f1, text="6. CAS LOG", font="Helvetica 8 bold", bg="#D4AFCD", fg="#6a097d",
+    command=lambda: View(file_CAS_log)).pack(fill=X)
+
+    # ======================================================================================
+    # View Stocks
+
+    Label(f1, text="VIEW STOCKS", font="Helvetica 8 bold", bg="green", fg="#B2DBBF").pack(fill=X, pady=10)
+
+    Button(f1, text="7. INWARD STOCK", font="Helvetica 8 bold", bg="#B2DBBF", fg="green",command=lambda: View(file_inward_stock)).pack(fill=X)
+
+    Button(f1, text="8. OUTWARD STOCK", font="Helvetica 8 bold", bg="#B2DBBF", fg="green",command=lambda: View(file_outward_stock)).pack(fill=X)
+
+    Button(f1, text="9. CAS STOCK", font="Helvetica 8 bold", bg="#B2DBBF", fg="green",command=lambda: View(file_CAS_stock)).pack(fill=X)
+
+    Button(f1, text="10. NET STOCK", font="Helvetica 8 bold", bg="#B2DBBF", fg="green",command=lambda: View(file_net_stock)).pack(fill=X)
+    # =============================================================================================
+    # Register
+    Label(f1, text="REGISTER", font="Helvetica 8 bold", bg="#120136", fg="#40bad5").pack(fill=X, pady=10)
+
+    Button(f1, text="A. CAS", font="Helvetica 8 bold", bg="#40bad5", fg="#120136", command=Enter_ENTRY_CAS).pack(fill=X)
+
+    Button(f1, text="B. GROUPED-INWARD-ENTRY (GIE)", font="Helvetica 8 bold", bg="#40bad5", fg="#120136",command=Enter_ENTRY_GIE).pack(fill=X)
+
+    Button(f1, text="C. MIN QUANTITY", font="Helvetica 8 bold", bg="#40bad5", fg="#120136",command=Enter_MIN_Entry).pack(fill=X)
+    # =====================================================================================
+    # View Registered Entires
+
+    Label(f1, text="VIEW REGISTERED ENTRIES", font="Helvetica 8 bold", bg="orange", fg="brown").pack(fill=X, pady=10)
+
+    Button(f1, text="D. CAS ENTRIES", font="Helvetica 8 bold", bg="brown", fg="orange",command=lambda: View(file_CAS_Entry)).pack(fill=X)
+
+    Button(f1, text="E. GIE ENTRIES", font="Helvetica 8 bold", bg="brown", fg="orange",command=lambda: View(file_Grouped_Inward_Entry)).pack(fill=X)
+
+    Button(f1, text="F. MIN QTY ENTRIES", font="Helvetica 8 bold", bg="brown", fg="orange",command=lambda: View(file_MIN_Entry)).pack(fill=X)
+    # ======================================================================================
+    # Paned Window2
+
+    w2 = PanedWindow(w1, orient=VERTICAL)
+    w1.add(w2)
+
+    headingtext = StringVar()
+    headingtext.set("")
+    Head = Label(w2, textvariable=headingtext, relief=RIDGE, font="Georgia 14 bold")
+    w2.add(Head)
+
+    f2 = Frame(w2, borderwidth=6, relief=RIDGE)
+    w2.add(f2)
+
+    temp_frame = Frame(f2)
+    temp_frame.pack()
+    root.mainloop()
+
+def LoginScreen():
+    global root, refresh_flag
+
+    def GetVal(loginpass):
+        global refresh_flag
+        if(loginpass.get() == "testdndplough"):Refresh()
+        else: tmsg.showerror("Invalid Password","Please enter valid password !")
+
+    root.destroy()
+    root = Tk()
+    root.geometry("733x434")
+    root.minsize(733, 434)
+    root.maxsize(733, 434)
+    Title = Label(text="INVENTORY - DND PLOUGH", bg="black", fg="white", font=("comicsansms", 8))
+    Title.pack(fill=X)
+    root.iconbitmap("inventory-icon-png-8.ico")
+    Label(root,text="INVENTORY - DNDPLOUGH",font="Georgia 22 bold",padx=100).pack(fill=X,pady=50)
+    Label(root, text="Enter Password",padx = 100, pady = 50,font="Georgia 16 bold").pack(fill=X)
+    loginpass=StringVar()
+    Entry(root,textvariable=loginpass).pack(fill=X,padx=88)
+    Button(root, text="Login", command=lambda:GetVal(loginpass)).pack(fill=X,padx=80,pady=20)
 
 
 #======================================= GUI ====================================================================
 
-root = Tk()
-
-# Geometry is the default application window size when it is launched.
-root.geometry("733x434")
-
-# MINIMUM WINDOW SIZE
-root.minsize(733,434)
-
-
-# Windows's Title
-root.title("INVENTORY - DND PLOUGH")
-
-# Label = user can't interact with label
-Title=Label(text="INVENTORY - DND PLOUGH", bg="black", fg="white", font=("comicsansms",8))
-Title.pack(fill=X)
-
-statustext = StringVar()
-statustext.set("Status - Ready !")
-Status = Label(textvariable = statustext ,anchor=W, bg = "orange", fg="black", padx="2", pady="2", font=("comicsansms",8))
-Status.pack( side=BOTTOM, fill=X )
-#========================================================
-# Paned Window 1
-w1=PanedWindow(root)
-w1.pack(fill=BOTH,expand=1)
-#=========================================================
-f1 = Frame(w1, bg="#2B2D2F", borderwidth=6, relief=RIDGE,padx="4")
-w1.add(f1)
-#==============================================================
-l1=Label(f1,text="MENU", font="Helvetica 8 bold",)
-l1.pack(fill=X,pady=5)
-#=====================================================
-#Log Items
-l2=Label(f1,text="LOG ITEMS", font="Helvetica 8 bold",bg="red",fg="#faebd7")
-l2.pack(fill=X, pady=10)
-
-b1=Button( f1, text="1. INWARD ITEM", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterInwardItem)
-b1.pack(fill=X)
-
-b2=Button( f1, text="2. OUTWARD ITEM", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterOutwardItem)
-b2.pack(fill=X)
-
-b3=Button( f1, text="3. COMPLETE ASSEMBLED SHAFTS (CAS)", font="Helvetica 8 bold",bg="#faebd7",fg="red",command=EnterCAS)
-b3.pack(fill=X)
-#=====================================================================================
-# View Logs
-
-l3=Label(f1,text="VIEW LOGS", font="Helvetica 8 bold",bg="#6a097d", fg="#D4AFCD")
-l3.pack(fill=X,pady=10)
-
-b4=Button( f1, text="4. INWARD LOG", font="Helvetica 8 bold",bg="#D4AFCD",fg="#6a097d",command=lambda: View(file_inward_log))
-b4.pack(fill=X)
-
-b5=Button( f1, text="5. OUTWARD LOG", font="Helvetica 8 bold",bg="#D4AFCD",fg="#6a097d",command=lambda: View(file_outward_log))
-b5.pack(fill=X)
-
-b6=Button( f1, text="6. CAS LOG", font="Helvetica 8 bold",bg="#D4AFCD",fg="#6a097d",command=lambda: View(file_CAS_log))
-b6.pack(fill=X)
-
-#======================================================================================
-# View Stocks
-
-l4=Label(f1,text="VIEW STOCKS", font="Helvetica 8 bold",bg="green", fg="#B2DBBF")
-l4.pack(fill=X, pady=10)
-
-b7=Button( f1, text="7. INWARD STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=lambda: View(file_inward_stock))
-b7.pack(fill=X)
-
-b8=Button( f1, text="8. OUTWARD STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=lambda: View(file_outward_stock))
-b8.pack(fill=X)
-
-b9=Button( f1, text="9. CAS STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=lambda: View(file_CAS_stock))
-b9.pack(fill=X)
-
-b10=Button( f1, text="10. NET STOCK", font="Helvetica 8 bold",bg="#B2DBBF",fg="green",command=lambda: View(file_net_stock))
-b10.pack(fill=X)
-#=============================================================================================
-# Register
-l5=Label(f1,text="REGISTER", font="Helvetica 8 bold",bg="#120136", fg="#40bad5")
-l5.pack(fill=X,pady=10)
-
-b11=Button( f1, text="A. CAS", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_ENTRY_CAS)
-b11.pack(fill=X)
-
-b12=Button( f1, text="B. GROUPED-INWARD-ENTRY (GIE)", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_ENTRY_GIE)
-b12.pack(fill=X)
-
-b13=Button( f1, text="C. MIN QUANTITY", font="Helvetica 8 bold",bg="#40bad5",fg="#120136",command=Enter_MIN_Entry)
-b13.pack(fill=X)
-#=====================================================================================
-# View Registered Entires
-
-l6=Label(f1,text="VIEW REGISTERED ENTRIES", font="Helvetica 8 bold",bg="orange", fg="brown")
-l6.pack(fill=X,pady=10)
-
-b14=Button( f1, text="D. CAS ENTRIES", font="Helvetica 8 bold",bg="brown",fg="orange",command=lambda: View(file_CAS_Entry))
-b14.pack(fill=X)
-
-b15=Button( f1, text="E. GIE ENTRIES", font="Helvetica 8 bold",bg="brown",fg="orange",command=lambda: View(file_Grouped_Inward_Entry))
-b15.pack(fill=X)
-
-b16=Button( f1, text="F. MIN QTY ENTRIES", font="Helvetica 8 bold",bg="brown",fg="orange",command=lambda: View(file_MIN_Entry))
-b16.pack(fill=X)
-#======================================================================================
-# Paned Window2
-
-w2=PanedWindow(w1, orient=VERTICAL)
-w1.add(w2)
-
-headingtext = StringVar()
-headingtext.set("")
-Head = Label(w2, textvariable=headingtext, relief= RIDGE, font="Georgia 14 bold")
-w2.add(Head)
-
-f2=Frame(w2, borderwidth=6, relief=RIDGE)
-w2.add(f2)
-
-temp_frame=Frame(f2)
-temp_frame.pack()
-
-
-
-#======================================================================================
+root=Tk()
+LoginScreen()
 root.mainloop()
+#======================================================================================
+
 
