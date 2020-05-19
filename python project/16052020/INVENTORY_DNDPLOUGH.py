@@ -6,6 +6,7 @@ import os
 # Attributes = ["Item Code", "Item", "Quantity", "SUPPLIER/CUSTOMER NAME", "DOCUMENT NO.", "Date", "Remarks"]
 PassWord = "testdndplough"
 # files
+file_pwd = "pwd.dnd"
 file_inward_log="InwardItemLog.dnd"
 file_outward_log="OutwardItemLog.dnd"
 file_net_stock="NetStock.dnd"
@@ -17,7 +18,7 @@ file_Grouped_Inward_Entry = "GroupedInwardEntry.dnd"
 file_MIN_Entry = "MIN_Entry.dnd"
 file_outward_stock = "OutwardItemStock.dnd"
 
-refresh_flag= 1 # No need to refresh (destroy root)
+
 # Feasible then proceed or not
 proceed_flag = 1 # default
 
@@ -89,19 +90,6 @@ def Reconstruct_Destruction():
         temp_frame = Frame(f2, pady=100)
         temp_frame.pack()
         destroy_flag = 0
-
-
-
-def UpdateBody(string):
-    global f2
-    bodytext = StringVar()
-    bodytext.set("")
-    Body = Label(f2, textvariable=bodytext)
-    Body.pack(fill=BOTH)
-    #import time
-    #time.sleep(0.01)
-    bodytext.set(string)
-    Body.update()
 
 def UpdateHead(string):
     global headingtext, Head
@@ -1776,7 +1764,7 @@ def TableGIE():
             var_code = StringVar()
             Entry(temp_frame, textvariable=var_code).pack(pady=5)
 
-            Button(temp_frame, text="Submit", command=lambda: TableShowSubAssemblies("GIE", var_code)).pack()
+            Button(temp_frame, text="Submit",bg="#484848",fg="#D0D0D0", command=lambda: TableShowSubAssemblies("GIE", var_code)).pack()
 
     except:
         #print("\n\n    *** PLEASE CLOSE THE FILE - REGISTERED-GIE-ENTIRES-TABLE.xlsx - and try again! ***\n\n")
@@ -3021,21 +3009,78 @@ def Register_MIN():
 #             return True
 #
 # if PASSWORD(): Menu()
-def Refresh():
+
+def ChangePassword():
+    Reconstruct_Destruction()
+    global temp_frame, f2
+
+    def Updt_pwd(existing_pwd,new_pwd):
+        CreateFileIfNotExist(file_pwd)
+        f=open(file_pwd,"r")
+        if (existing_pwd.get() == f.read()):
+            f.close()
+            g=open(file_pwd,"w")
+            g.write(new_pwd.get())
+            g.close()
+            tmsg.showinfo("Successful !", "Password has been updated successfully !")
+            Clear_Screen()
+        else:
+            UpdateStatus("User entered wrong existing password !    |    Waiting for user to change existing password")
+            tmsg.showerror("Wrong Existing Password", "Please enter correct existing password and try again !")
+
+
+    temp_frame.destroy()
+    temp_frame = Frame(f2, pady=100)
+    temp_frame.pack()
+    UpdateHead("Change Password")
+    Label(temp_frame, text="Enter Existing Password: ").grid(row=0, column=0)
+    existing_pwd = StringVar()
+    Entry(temp_frame,textvariable= existing_pwd, show="*").grid(row=0, column=1)
+
+    Label(temp_frame, text=" ").grid(row=1, column=0)
+    Label(temp_frame, text=" ").grid(row=1, column=1)
+
+    Label(temp_frame, text="Enter New Password: ").grid(row=2, column=0)
+    new_pwd = StringVar()
+    Entry(temp_frame, textvariable=new_pwd,show="*").grid(row=2, column=1)
+
+    Button(temp_frame, text="Update Password", command=lambda: Updt_pwd(existing_pwd,new_pwd)).grid(row=3,column=1)
+    UpdateStatus("User changing existing password ...")
+def Clear_Screen():
+    global temp_frame, f2
+    Reconstruct_Destruction()
+    temp_frame.destroy()
+    temp_frame = Frame(f2, pady=100)
+    temp_frame.pack()
+    UpdateStatus("Ready !")
+    UpdateHead(" ")
+
+def Refresh_Main():
     # Geometry is the default application window size when it is launched.
-    global root,w1,w2,Status,Title,f1,f2,headingtext,Head,temp_frame,statustext
+    global root,w1,w2,Status,Title,f1,f2,headingtext,Head,temp_frame,statustext,mymenu
     root.destroy()
     root=Tk()
-    root.geometry("733x434")
 
-    # MINIMUM WINDOW SIZE
-    root.minsize(933, 634)
+    root.geometry("733x434")
+    root.minsize(733,434)
+    root.wm_state("zoomed")
+
+    #root.attributes("-fullscreen",True)
+
 
     # Windows's Title
     root.title("INVENTORY - DND PLOUGH")
     root.iconbitmap("inventory-icon-png-8.ico")
+
+    mymenu = Menu(root)
+    mymenu.add_command(label="Clear Screen", command=Clear_Screen)
+    mymenu.add_command(label="Logout", command=LoginScreen)
+    mymenu.add_command(label="Change Password", command=ChangePassword)
+    mymenu.add_command(label="Exit", command=quit)
+    root.config(menu=mymenu)
+
     # Label = user can't interact with label
-    Title = Label(text="INVENTORY - DND PLOUGH", bg="black", fg="white", font=("comicsansms", 8))
+    Title = Label(text="INVENTORY - DND PLOUGH    |    SHUBAN AGRITECH PVT. LTD    |    www.dndplough.in", bg="black", fg="white", font=("comicsansms", 8))
     Title.pack(fill=X)
 
     statustext = StringVar()
@@ -3054,7 +3099,7 @@ def Refresh():
     Label(f1, text="MENU", font="Helvetica 8 bold", ).pack(fill=X, pady=5)
     # =====================================================
     # Log Items
-    Label(f1, text="LOG ITEMS", font="Helvetica 8 bold", bg="red", fg="#faebd7").pack(fill=X, pady=10)
+    Label(f1, text="LOG ITEMS", font="Helvetica 8 bold", bg="red", fg="#faebd7").pack(fill=X, pady=(10,0))
 
     Button(f1, text="1. INWARD ITEM", font="Helvetica 8 bold", bg="#faebd7", fg="red", command=EnterInwardItem).pack(fill=X)
 
@@ -3064,7 +3109,7 @@ def Refresh():
     # =====================================================================================
     # View Logs
 
-    Label(f1, text="VIEW LOGS", font="Helvetica 8 bold", bg="#6a097d", fg="#D4AFCD").pack(fill=X, pady=10)
+    Label(f1, text="VIEW LOGS", font="Helvetica 8 bold", bg="#6a097d", fg="#D4AFCD").pack(fill=X, pady=(15,0))
 
     Button(f1, text="4. INWARD LOG", font="Helvetica 8 bold", bg="#D4AFCD", fg="#6a097d",command=lambda: View(file_inward_log)).pack(fill=X)
 
@@ -3076,7 +3121,7 @@ def Refresh():
     # ======================================================================================
     # View Stocks
 
-    Label(f1, text="VIEW STOCKS", font="Helvetica 8 bold", bg="green", fg="#B2DBBF").pack(fill=X, pady=10)
+    Label(f1, text="VIEW STOCKS", font="Helvetica 8 bold", bg="green", fg="#B2DBBF").pack(fill=X, pady=(15,0))
 
     Button(f1, text="7. INWARD STOCK", font="Helvetica 8 bold", bg="#B2DBBF", fg="green",command=lambda: View(file_inward_stock)).pack(fill=X)
 
@@ -3087,7 +3132,7 @@ def Refresh():
     Button(f1, text="10. NET STOCK", font="Helvetica 8 bold", bg="#B2DBBF", fg="green",command=lambda: View(file_net_stock)).pack(fill=X)
     # =============================================================================================
     # Register
-    Label(f1, text="REGISTER", font="Helvetica 8 bold", bg="#120136", fg="#40bad5").pack(fill=X, pady=10)
+    Label(f1, text="REGISTER", font="Helvetica 8 bold", bg="#120136", fg="#40bad5").pack(fill=X, pady=(15,0))
 
     Button(f1, text="A. CAS", font="Helvetica 8 bold", bg="#40bad5", fg="#120136", command=Enter_ENTRY_CAS).pack(fill=X)
 
@@ -3097,7 +3142,7 @@ def Refresh():
     # =====================================================================================
     # View Registered Entires
 
-    Label(f1, text="VIEW REGISTERED ENTRIES", font="Helvetica 8 bold", bg="orange", fg="brown").pack(fill=X, pady=10)
+    Label(f1, text="VIEW REGISTERED ENTRIES", font="Helvetica 8 bold", bg="orange", fg="brown").pack(fill=X, pady=(15,0))
 
     Button(f1, text="D. CAS ENTRIES", font="Helvetica 8 bold", bg="brown", fg="orange",command=lambda: View(file_CAS_Entry)).pack(fill=X)
 
@@ -3123,26 +3168,33 @@ def Refresh():
     root.mainloop()
 
 def LoginScreen():
-    global root, refresh_flag
+    global root
 
     def GetVal(loginpass):
-        global refresh_flag
-        if(loginpass.get() == "testdndplough"):Refresh()
+        global  file_pwd
+        CreateFileIfNotExist(file_pwd)
+        f= open(file_pwd,"r")
+        user_pwd=f.read()
+        f.close()
+        if(loginpass.get() == user_pwd):Refresh_Main()
         else: tmsg.showerror("Invalid Password","Please enter valid password !")
 
     root.destroy()
     root = Tk()
     root.geometry("733x434")
-    root.minsize(733, 434)
-    root.maxsize(733, 434)
-    Title = Label(text="INVENTORY - DND PLOUGH", bg="black", fg="white", font=("comicsansms", 8))
-    Title.pack(fill=X)
+    root.minsize(733, 334)
+    root.maxsize(733, 334)
+
+    root.title("INVENTORY - DND PLOUGH | LOGIN")
     root.iconbitmap("inventory-icon-png-8.ico")
-    Label(root,text="INVENTORY - DNDPLOUGH",font="Georgia 22 bold",padx=100).pack(fill=X,pady=50)
-    Label(root, text="Enter Password",padx = 100, pady = 50,font="Georgia 16 bold").pack(fill=X)
+
+    Title = Label(text="SHUBAN AGRITECH PVT. LTD    |    www.dndplough.in", bg="black", fg="white", font=("comicsansms", 8))
+    Title.pack(fill=X)
+    Label(root,text="INVENTORY - DND PLOUGH",font="Georgia 22 bold",padx=100).pack(pady=50)
+    Label(root, text="Enter Password").pack()
     loginpass=StringVar()
-    Entry(root,textvariable=loginpass).pack(fill=X,padx=88)
-    Button(root, text="Login", command=lambda:GetVal(loginpass)).pack(fill=X,padx=80,pady=20)
+    Entry(root,textvariable=loginpass,show="*",font="bold").pack(padx=88)
+    Button(root, text="Login", command=lambda:GetVal(loginpass)).pack(padx=80,pady=5)
 
 
 #======================================= GUI ====================================================================
